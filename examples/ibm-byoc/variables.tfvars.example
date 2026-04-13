@@ -1,0 +1,92 @@
+# ============================================================================
+# IBM BYOC Terraform Variables Example
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your actual values
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Common Variables (Required for all configurations)
+# ----------------------------------------------------------------------------
+subscription_id = "your-subscription-uuid-here"
+dataplane_id    = "your-dataplane-uuid-here"
+dataplane_name  = "my-byoc-dataplane"
+engine_id       = "your-engine-uuid-here"
+engine_name     = "my-db2-engine"
+
+# ----------------------------------------------------------------------------
+# Azure Configuration (for Azure-Db2 testing)
+# ----------------------------------------------------------------------------
+# Uncomment and fill these values when testing Azure
+
+azure_region              = "eastus"
+azure_subscription_id     = "12345678-1234-1234-1234-123456789012"
+azure_tenant_id           = "87654321-4321-4321-4321-210987654321"
+azure_client_id           = "abcdef12-3456-7890-abcd-ef1234567890"
+azure_client_secret       = "your-azure-client-secret-here"
+
+# ----------------------------------------------------------------------------
+# AWS Configuration (for AWS-Db2 testing)
+# ----------------------------------------------------------------------------
+# Uncomment and fill these values when testing AWS
+
+# aws_region         = "us-east-1"
+# aws_account_id     = "123456789012"
+# aws_role_arn       = "arn:aws:iam::123456789012:role/byoc-role"
+# vpc_cidr           = "10.0.0.0/16"
+# vpc_network_type   = "private"
+# private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+# public_subnet_cidrs  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+# ----------------------------------------------------------------------------
+# Engine Configuration (Common for all cloud providers)
+# ----------------------------------------------------------------------------
+availability_zone = "eastus-1"  # For Azure; use "us-east-1a" for AWS
+storage_units     = 100
+compute_units     = 4
+instance_type     = "Standard_D4s_v3"  # For Azure; use "m5.xlarge" for AWS
+
+# Network Configuration
+endpoint_type                = "private"
+private_link_service_enabled = true
+public_enabled               = false
+
+# Additional Configuration
+oracle_compatibility = false
+replicas             = 1
+plan                 = "standard"
+profile_name         = "db2-standard"
+
+# ----------------------------------------------------------------------------
+# Additional Engine IDs (if deploying multiple engines)
+# ----------------------------------------------------------------------------
+# db2wh_engine_id   = "your-db2wh-engine-uuid-here"
+# netezza_engine_id = "your-netezza-engine-uuid-here"
+
+# ============================================================================
+# TESTING GUIDE
+# ============================================================================
+#
+# 1. AZURE-DB2 TESTING:
+#    - Copy this file to terraform.tfvars
+#    - Fill in Azure-specific values above
+#    - Ensure main.tf has Azure dataplane and Db2 engine uncommented
+#    - Run: terraform init && terraform apply
+#
+# 2. AWS-DB2 TESTING:
+#    - Comment out Azure configuration in main.tf
+#    - Uncomment AWS configuration in main.tf
+#    - Fill in AWS-specific values above
+#    - Run: terraform apply
+#
+# 3. TESTING OTHER ENGINES (Db2WH, Netezza):
+#    - Uncomment the desired engine in main.tf
+#    - Provide the engine_id for that engine
+#    - Run: terraform apply
+#
+# 4. CRUD OPERATIONS:
+#    CREATE: terraform apply
+#    READ:   terraform show / terraform state show <resource>
+#    UPDATE: Modify values and run terraform apply
+#    DELETE: terraform destroy
+#
+# ============================================================================

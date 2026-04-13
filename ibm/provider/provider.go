@@ -23,6 +23,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/appid"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/atracker"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/backuprecovery"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/byoc"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/catalogmanagement"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/cdtektonpipeline"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/cdtoolchain"
@@ -208,6 +209,12 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IAM Authentication refresh token",
+			},
+			"byoc_bearer_token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "BYOC API Bearer token (separate from IAM token)",
 			},
 			"visibility": {
 				Type:         schema.TypeString,
@@ -978,6 +985,12 @@ func Provider() *schema.Provider {
 			"ibm_scc_report_violation_drift":   scc.DataSourceIbmSccReportViolationDrift(),
 			"ibm_scc_rule":                     scc.DataSourceIbmSccRule(),
 
+			// BYOC Services
+			"ibm_byoc_dataplane":  byoc.DataSourceIBMByocDataplane(),
+			"ibm_byoc_dataplanes": byoc.DataSourceIBMByocDataplanes(),
+			"ibm_byoc_engine":     byoc.DataSourceIBMByocEngine(),
+			"ibm_byoc_engines":    byoc.DataSourceIBMByocEngines(),
+
 			// Security Services
 			"ibm_pag_instance": pag.DataSourceIBMPag(),
 
@@ -1706,6 +1719,10 @@ func Provider() *schema.Provider {
 			"ibm_scc_provider_type_instance": scc.ResourceIbmSccProviderTypeInstance(),
 			"ibm_scc_scope":                  scc.ResourceIbmSccScope(),
 
+			// BYOC Services
+			"ibm_byoc_dataplane": byoc.ResourceIBMByocDataplane(),
+			"ibm_byoc_engine":    byoc.ResourceIbmByocEngine(),
+
 			// Security Services
 			"ibm_pag_instance": pag.ResourceIBMPag(),
 
@@ -2316,6 +2333,10 @@ func Validator() validate.ValidatorDict {
 				// // Added for Usage Reports
 				"ibm_billing_report_snapshot": usagereports.ResourceIBMBillingReportSnapshotValidator(),
 
+				// BYOC Services
+				"ibm_byoc_dataplane": byoc.ResourceIBMByocDataplaneValidator(),
+				"ibm_byoc_engine":    byoc.ResourceIbmByocEngineValidator(),
+
 				// // Added for Secrets Manager
 				"ibm_sm_secret_group":                                                secretsmanager.ResourceIbmSmSecretGroupValidator(),
 				"ibm_sm_en_registration":                                             secretsmanager.ResourceIbmSmEnRegistrationValidator(),
@@ -2478,7 +2499,7 @@ func Validator() validate.ValidatorDict {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	var bluemixAPIKey string
 	var bluemixTimeout int
-	var iamToken, iamRefreshToken, iamTrustedProfileId, iamTrustedProfileName, account string
+	var iamToken, iamRefreshToken, iamTrustedProfileId, iamTrustedProfileName, account, byocBearerToken string
 	if key, ok := d.GetOk("bluemix_api_key"); ok {
 		bluemixAPIKey = key.(string)
 	}
@@ -2490,6 +2511,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	if rtoken, ok := d.GetOk("iam_refresh_token"); ok {
 		iamRefreshToken = rtoken.(string)
+	}
+	if btoken, ok := d.GetOk("byoc_bearer_token"); ok {
+		byocBearerToken = btoken.(string)
 	}
 	if tid, ok := d.GetOk("iam_profile_id"); ok {
 		iamTrustedProfileId = tid.(string)
@@ -2694,6 +2718,15 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		}
 	}
 
+	// byoc_bearer_token - check environment variable (separate from IAM token)
+	if byocBearerToken == "" {
+		if token := os.Getenv("BYOC_BEARER_TOKEN"); token != "" {
+			byocBearerToken = token
+		} else if token := os.Getenv("IBMCLOUD_BYOC_TOKEN"); token != "" {
+			byocBearerToken = token
+		}
+	}
+
 	// iam_refresh_token - check environment variable
 	if iamRefreshToken == "" {
 		if refreshToken := os.Getenv("IC_IAM_REFRESH_TOKEN"); refreshToken != "" {
@@ -2792,6 +2825,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		RiaasEndPoint:         riaasEndPoint,
 		IAMToken:              iamToken,
 		IAMRefreshToken:       iamRefreshToken,
+		BYOCBearerToken:       byocBearerToken,
 		Zone:                  zone,
 		Visibility:            visibility,
 		PrivateEndpointType:   privateEndpointType,
