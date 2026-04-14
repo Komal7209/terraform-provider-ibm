@@ -23,7 +23,8 @@ The IBM BYOC service allows you to deploy IBM database engines (Db2, Db2 Warehou
 1. **IBM Cloud Account** with BYOC service access
 2. **Cloud Provider Account** (AWS or Azure)
 3. **Terraform** >= 1.0
-4. **Provider Credentials**:
+4. **BYOC Bearer Token** - Obtain from BYOC service (not IBM Cloud IAM token)
+5. **Provider Credentials**:
    - For Azure: Service Principal with appropriate permissions
    - For AWS: IAM Role with cross-account access
 
@@ -34,14 +35,37 @@ The IBM BYOC service allows you to deploy IBM database engines (Db2, Db2 Warehou
 ```bash
 cd examples/ibm-byoc
 cp variables.tfvars.example terraform.tfvars
+# OR if you want to use a different filename:
+# cp variables.tfvars.example variables.tfvars
+# Then use: terraform plan -var-file="variables.tfvars"
 ```
 
-### Step 2: Configure Variables
+**Note**: Terraform automatically loads `terraform.tfvars` or `*.auto.tfvars` files. If you use a different filename like `variables.tfvars`, you must specify it with the `-var-file` flag:
+```bash
+terraform plan -var-file="variables.tfvars"
+terraform apply -var-file="variables.tfvars"
+```
 
-Edit `terraform.tfvars` with your Azure and IBM Cloud details:
+### Step 2: Uncomment Resources in main.tf
+
+**IMPORTANT**: The `main.tf` file contains commented-out resource examples. You must uncomment the resources you want to use:
+
+1. Open `main.tf`
+2. Uncomment the dataplane resource for your cloud provider (AWS or Azure)
+3. Uncomment the engine resource(s) you want to deploy (Db2, Db2WH, or Netezza)
+4. The data sources at the bottom will automatically work once resources are uncommented
+
+Example: To use Azure with Db2, uncomment lines 46-64 (Azure dataplane) and lines 72-110 (Db2 engine).
+
+### Step 3: Configure Variables
+
+Edit `terraform.tfvars` with your Azure and BYOC details:
 
 ```hcl
-# IBM Cloud
+# BYOC Authentication
+bearer_token    = "your-byoc-bearer-token"  # Required: BYOC-specific bearer token
+
+# BYOC Configuration
 subscription_id = "your-ibm-subscription-uuid"
 dataplane_id    = "your-dataplane-uuid"
 dataplane_name  = "my-azure-dataplane"
@@ -62,7 +86,47 @@ compute_units     = 4
 instance_type     = "Standard_D4s_v3"
 ```
 
-### Step 3: Initialize and Apply
+### Step 3: Authentication Setup
+
+**IMPORTANT**: BYOC requires a bearer token from IBM Verify (SSO).
+
+**Environment Considerations:**
+- The default API endpoint is for the **development environment**: `https://broker-api-eastus.services.db2-azure-byoc.dev.saas.ibm.com/byoc`
+- If you're using a different environment (staging/production), set the endpoint:
+  ```bash
+  # For staging
+  export IBMCLOUD_BROKER_API_ENDPOINT="https://broker-api-eastus.services.db2-azure-byoc.test.saas.ibm.com/byoc"
+  
+  # For production
+  export IBMCLOUD_BROKER_API_ENDPOINT="https://broker-api-eastus.services.db2-azure-byoc.cloud.ibm.com/byoc"
+  ```
+- **Your token must match the environment** - a dev token won't work with production API and vice versa
+
+#### Option 1: Using `iam_token` in provider (Recommended)
+```hcl
+provider "ibm" {
+  iam_token = var.bearer_token  # Your BYOC bearer token
+  region    = var.region
+}
+```
+
+#### Option 2: Using Environment Variables
+```bash
+# Set BYOC bearer token
+export TF_VAR_bearer_token="your-byoc-bearer-token"
+
+# Or use BYOC-specific environment variable
+export BYOC_BEARER_TOKEN="your-byoc-bearer-token"
+```
+
+#### Option 3: Alternative Environment Variable
+```bash
+export IBMCLOUD_BYOC_TOKEN="your-byoc-bearer-token"
+```
+
+**Note**: If you have `ibmcloud_api_key` set, the provider will use IAM authentication for other IBM Cloud services, but BYOC will use the bearer token specified via `iam_token` or environment variables.
+
+### Step 4: Initialize and Apply
 
 ```bash
 terraform init
@@ -224,6 +288,56 @@ export TF_LOG=DEBUG
 terraform apply
 ```
 
+5. **"failed to validate token" (401 Error) - Environment Mismatch**
+   
+   **Symptoms:**
+   ```
+   Error: GetDataplaneWithContext failed failed to validate token
+   StatusCode: 401
+   ```
+   
+   **Common Causes:**
+   - Token is from a different environment than the API endpoint
+   - Token audience doesn't match the API's expected audience
+   - Token has expired
+   - Token doesn't have access to the subscription
+   
+   **Solutions:**
+   
+   a. **Check Token Environment:**
+   - Look at your token's `iss` (issuer) claim
+   - Dev tokens: `console-ibm-dev.verify.ibm.com`
+   - Staging tokens: `console-ibm-test.verify.ibm.com`
+   - Production tokens: `console.verify.ibm.com`
+   
+   b. **Match API Endpoint to Token:**
+   ```bash
+   # If using dev token (default)
+   export IBMCLOUD_BROKER_API_ENDPOINT="https://broker-api-eastus.services.db2-azure-byoc.dev.saas.ibm.com/byoc"
+   
+   # If using staging token
+   export IBMCLOUD_BROKER_API_ENDPOINT="https://broker-api-eastus.services.db2-azure-byoc.test.saas.ibm.com/byoc"
+   
+   # If using production token
+   export IBMCLOUD_BROKER_API_ENDPOINT="https://broker-api-eastus.services.db2-azure-byoc.cloud.ibm.com/byoc"
+   ```
+   
+   c. **Verify Token Hasn't Expired:**
+   - JWT tokens have an `exp` (expiration) claim
+   - Check if your token is still valid (your token expires in ~2 hours)
+   - Request a new token if expired
+   
+   d. **Check Token Audience:**
+   - The token's `aud` claim must match what the API expects
+   - Your token has audience: `36f80efe-aea3-46bb-a642-4043b97edf3c`
+   - Contact BYOC team if audience mismatch persists
+   
+   e. **Use the Debug Script:**
+   ```bash
+   ./debug-token.sh
+   ```
+   This will analyze your token and suggest the correct API endpoint.
+
 ## API Flow Details
 
 ### UpdateDataplane API Actions
@@ -242,6 +356,50 @@ The BYOC API follows RESTful PUT semantics where PUT is idempotent and handles b
 - Provides fine-grained control via action parameters
 - Supports hyperscaler-specific flows naturally
 
+## Running Tests
+
+To run the acceptance tests for BYOC resources:
+
+```bash
+# IMPORTANT: BYOC requires TWO separate tokens for integration tests:
+# 1. IBM Cloud IAM token (for test framework and other IBM Cloud services)
+# 2. BYOC Bearer token (for BYOC API calls)
+
+# Set IBM Cloud IAM token (required for test framework)
+export IC_IAM_TOKEN="your-ibm-cloud-iam-token"
+# OR
+export IBMCLOUD_IAM_TOKEN="your-ibm-cloud-iam-token"
+
+# Set BYOC Bearer token (required for BYOC API - this is SEPARATE from IAM token)
+export BYOC_BEARER_TOKEN="your-ibm-verify-sso-token"
+# OR
+export IBMCLOUD_BYOC_TOKEN="your-ibm-verify-sso-token"
+
+# Set test resource IDs
+export BYOC_SUBSCRIPTION_ID="your-subscription-uuid"
+export BYOC_DATAPLANE_ID="your-dataplane-uuid"
+
+# Run specific test
+make testacc TEST=./ibm/service/byoc TESTARGS='-run=TestAccIbmByocDataplaneDataSourceBasic'
+
+# Run all BYOC tests
+make testacc TEST=./ibm/service/byoc
+```
+
+**Dual Authentication Requirement:**
+BYOC integration tests require BOTH tokens:
+- **IBM Cloud IAM Token** (`IC_IAM_TOKEN` or `IBMCLOUD_IAM_TOKEN`): Used by the test framework and other IBM Cloud services
+- **BYOC Bearer Token** (`BYOC_BEARER_TOKEN` or `IBMCLOUD_BYOC_TOKEN`): Used specifically for BYOC API authentication
+
+These are two independent authentication mechanisms. The BYOC bearer token is obtained from IBM Verify SSO and is separate from the standard IBM Cloud IAM token.
+
+**Important Notes:**
+- Both tokens should NOT include the "Bearer " prefix - just the JWT token itself
+- The provider automatically strips "Bearer " if present
+- Tests use real BYOC resources - ensure IDs are valid
+- Tests may take several minutes to complete
+- Failed authentication (401) means token is invalid, expired, or not set correctly
+
 ## Additional Resources
 
 - [IBM BYOC Documentation](https://cloud.ibm.com/docs/byoc)
@@ -253,7 +411,8 @@ The BYOC API follows RESTful PUT semantics where PUT is idempotent and handles b
 For issues or questions:
 1. Check the troubleshooting section above
 2. Review Terraform and provider logs
-3. Contact IBM Cloud Support
+3. Use the debug scripts (`debug-token.sh`, `test-api-direct.sh`)
+4. Contact IBM Cloud Support
 4. Open an issue in the provider repository
 
 ## License
