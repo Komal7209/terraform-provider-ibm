@@ -54,7 +54,7 @@ variable "vpc_network_type" {
   description = "VPC network type: public or private (required for AWS deployments)"
   default     = null
   validation {
-    condition     = var.vpc_network_type == null || contains(["public", "private"], var.vpc_network_type)
+    condition     = var.vpc_network_type == null || can(contains(["public", "private"], var.vpc_network_type))
     error_message = "VPC network type must be either 'public' or 'private'"
   }
 }
@@ -72,6 +72,37 @@ variable "public_subnet_cidrs" {
 }
 
 # Azure-specific Dataplane Variables
+variable "azure_region" {
+  type        = string
+  description = "Azure region (required for Azure deployments)"
+  default     = "eastus"
+}
+
+variable "azure_subscription_id" {
+  type        = string
+  description = "Azure subscription ID (required for Azure deployments)"
+  default     = null
+}
+
+variable "azure_tenant_id" {
+  type        = string
+  description = "Azure tenant ID (required for Azure deployments)"
+  default     = null
+}
+
+variable "azure_client_id" {
+  type        = string
+  description = "Azure client ID (required for Azure deployments)"
+  default     = null
+}
+
+variable "azure_client_secret" {
+  type        = string
+  description = "Azure client secret (required for Azure deployments)"
+  default     = null
+  sensitive   = true
+}
+
 variable "hyperscaler_subscription_id" {
   type        = string
   description = "Azure subscription ID (required for Azure deployments)"
@@ -131,7 +162,7 @@ variable "endpoint_type" {
   description = "Endpoint type: private, public, or public-private"
   default     = null
   validation {
-    condition     = var.endpoint_type == null || contains(["private", "public", "public-private"], var.endpoint_type)
+    condition     = var.endpoint_type == null || can(contains(["private", "public", "public-private"], var.endpoint_type))
     error_message = "Endpoint type must be one of: private, public, public-private"
   }
 }

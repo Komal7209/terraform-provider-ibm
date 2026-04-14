@@ -275,13 +275,11 @@ func checkPrerequisites(ctx context.Context, client *brokerapiv1.BrokerApiV1, su
 
 	_, response, err := client.UpdateDataplaneWithContext(ctx, updateOptions)
 	if err != nil {
-		responseBody := ""
 		statusCode := 0
+		responseBody := ""
 		if response != nil {
 			statusCode = response.StatusCode
-			if rawResult := response.GetRawResult(); rawResult != nil {
-				responseBody = string(rawResult)
-			}
+			responseBody = fmt.Sprintf("%v", response.Result)
 		}
 		log.Printf("[DEBUG] CheckPrerequisites (action=prereqs) failed: %s\nStatus: %d\nResponse: %s", err, statusCode, responseBody)
 		return fmt.Errorf("checkPrerequisites failed: %s (Status: %d, Response: %s)", err, statusCode, responseBody)

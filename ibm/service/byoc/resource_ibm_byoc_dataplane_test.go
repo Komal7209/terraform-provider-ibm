@@ -168,12 +168,12 @@ func testAccCheckIBMByocDataplaneExists(n string, dataplaneID *string) resource.
 func testAccCheckIBMByocDataplaneAWS(name string) string {
 	return fmt.Sprintf(`
 		resource "ibm_byoc_dataplane" "%s" {
-			subscription_id = "test-subscription-id"
+			subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+			dataplane_id = "b2c3d4e5-6789-01bc-defg-234567890abc"
 			name = "%s"
 			region = "us-east-1"
 			cloud_provider = "AWS"
-			aws_account_id = "123456789012"
-			aws_role_arn = "arn:aws:iam::123456789012:role/test-role"
+			hyperscaler_account_id = "123456789012"
 		}
 	`, name, name)
 }
@@ -181,12 +181,12 @@ func testAccCheckIBMByocDataplaneAWS(name string) string {
 func testAccCheckIBMByocDataplaneAWSUpdate(name string) string {
 	return fmt.Sprintf(`
 		resource "ibm_byoc_dataplane" "%s" {
-			subscription_id = "test-subscription-id"
+			subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+			dataplane_id = "b2c3d4e5-6789-01bc-defg-234567890abc"
 			name = "%s-updated"
 			region = "us-east-1"
 			cloud_provider = "AWS"
-			aws_account_id = "123456789012"
-			aws_role_arn = "arn:aws:iam::123456789012:role/test-role"
+			hyperscaler_account_id = "123456789012"
 		}
 	`, name, name)
 }
@@ -194,29 +194,29 @@ func testAccCheckIBMByocDataplaneAWSUpdate(name string) string {
 func testAccCheckIBMByocDataplaneAzure(name string) string {
 	return fmt.Sprintf(`
 		resource "ibm_byoc_dataplane" "%s" {
-			subscription_id = "test-subscription-id"
+			subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+			dataplane_id = "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 			name = "%s"
 			region = "eastus"
 			cloud_provider = "Azure"
-			azure_subscription_id = "12345678-1234-1234-1234-123456789012"
-			azure_tenant_id = "87654321-4321-4321-4321-210987654321"
-			azure_client_id = "abcdef12-3456-7890-abcd-ef1234567890"
-			azure_client_secret = "test-client-secret"
 		}
 	`, name, name)
 }
 
+// hyperscaler_subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+// hyperscaler_tenant_id = "ffc234dd-5af0-408c-bcd6-add46b47c86f"
+
 func testAccCheckIBMByocDataplaneAzureUpdate(name string) string {
 	return fmt.Sprintf(`
 		resource "ibm_byoc_dataplane" "%s" {
-			subscription_id = "test-subscription-id"
+			subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+			dataplane_id = "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 			name = "%s-updated"
 			region = "eastus"
 			cloud_provider = "Azure"
-			azure_subscription_id = "12345678-1234-1234-1234-123456789012"
-			azure_tenant_id = "87654321-4321-4321-4321-210987654321"
-			azure_client_id = "abcdef12-3456-7890-abcd-ef1234567890"
-			azure_client_secret = "test-client-secret"
 		}
 	`, name, name)
 }
+
+// hyperscaler_subscription_id = "f038d818-2358-42f0-a84a-c32656597586"
+// hyperscaler_tenant_id = "ffc234dd-5af0-408c-bcd6-add46b47c86f"

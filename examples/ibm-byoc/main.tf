@@ -42,7 +42,6 @@
 # ----------------------------------------------------------------------------
 # Option 2: Azure Dataplane with Db2 Engine (ACTIVE FOR TESTING)
 # ----------------------------------------------------------------------------
-//--------------
 # resource "ibm_byoc_dataplane" "byoc_dataplane" {
 #   subscription_id = var.subscription_id
 #   dataplane_id    = var.dataplane_id
@@ -51,10 +50,8 @@
 #   cloud_provider  = "Azure"
 
 #   # Azure-specific required fields
-#   azure_subscription_id = var.azure_subscription_id
-#   azure_tenant_id       = var.azure_tenant_id
-#   azure_client_id       = var.azure_client_id
-#   azure_client_secret   = var.azure_client_secret
+#   hyperscaler_subscription_id = var.azure_subscription_id
+#   hyperscaler_tenant_id       = var.azure_tenant_id
 
 #   timeouts {
 #     create = "30m"
@@ -75,7 +72,6 @@
 # resource "ibm_byoc_engine" "db2_engine" {
 #   subscription_id = var.subscription_id
 #   dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
-#   engine_id       = var.engine_id
 #   engine_name     = var.engine_name
 #   engine_type     = "db2"
 
@@ -174,43 +170,43 @@
 # Use this to get details about an existing dataplane
 data "ibm_byoc_dataplane" "dataplane_info" {
   subscription_id = var.subscription_id
-  dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
+  dataplane_id    = var.dataplane_id #ibm_byoc_dataplane.byoc_dataplane.dataplane_id
 
-  depends_on = [ibm_byoc_dataplane.byoc_dataplane]
+  # depends_on = [ibm_byoc_dataplane.byoc_dataplane]
 }
 
 # ----------------------------------------------------------------------------
 # Example 2: List all dataplanes in a subscription
 # ----------------------------------------------------------------------------
 # Use this to discover all dataplanes for your subscription
-data "ibm_byoc_dataplanes" "all_dataplanes" {
-  subscription_id = var.subscription_id
+# data "ibm_byoc_dataplanes" "all_dataplanes" {
+#   subscription_id = var.subscription_id
 
-  depends_on = [ibm_byoc_dataplane.byoc_dataplane]
-}
+#   depends_on = [ibm_byoc_dataplane.byoc_dataplane]
+# }
 
 # ----------------------------------------------------------------------------
 # Example 3: Query a specific Db2 engine by ID
 # ----------------------------------------------------------------------------
 # Use this to get details about an existing Db2 engine
-data "ibm_byoc_engine" "db2_engine_info" {
-  subscription_id = var.subscription_id
-  dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
-  engine_id       = ibm_byoc_engine.db2_engine.engine_id
+# data "ibm_byoc_engine" "db2_engine_info" {
+#   subscription_id = var.subscription_id
+#   dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
+#   engine_id       = ibm_byoc_engine.db2_engine.engine_id
 
-  depends_on = [ibm_byoc_engine.db2_engine]
-}
+#   depends_on = [ibm_byoc_engine.db2_engine]
+# }
 
 # ----------------------------------------------------------------------------
 # Example 4: List all engines on a dataplane
 # ----------------------------------------------------------------------------
 # Use this to discover all engines deployed on a specific dataplane
-data "ibm_byoc_engines" "all_engines" {
-  subscription_id = var.subscription_id
-  dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
+# data "ibm_byoc_engines" "all_engines" {
+#   subscription_id = var.subscription_id
+#   dataplane_id    = ibm_byoc_dataplane.byoc_dataplane.dataplane_id
 
-  depends_on = [ibm_byoc_engine.db2_engine]
-}
+#   depends_on = [ibm_byoc_engine.db2_engine]
+# }
 
 # ----------------------------------------------------------------------------
 # Example 5: Query existing resources (without creating them)
@@ -260,46 +256,46 @@ output "dataplane_details" {
 }
 
 # Output all dataplanes in subscription
-output "all_dataplanes" {
-  description = "List of all dataplanes in the subscription"
-  value = [
-    for dp in data.ibm_byoc_dataplanes.all_dataplanes.dataplanes : {
-      id     = dp.id
-      name   = dp.name
-      status = dp.status
-      region = dp.region
-      cloud  = dp.cloud_provider
-    }
-  ]
-}
+# output "all_dataplanes" {
+#   description = "List of all dataplanes in the subscription"
+#   value = [
+#     for dp in data.ibm_byoc_dataplanes.all_dataplanes.dataplanes : {
+#       id     = dp.id
+#       name   = dp.name
+#       status = dp.status
+#       region = dp.region
+#       cloud  = dp.cloud_provider
+#     }
+#   ]
+# }
 
 # Output Db2 engine information
-output "db2_engine_details" {
-  description = "Details of the Db2 engine"
-  value = {
-    id         = data.ibm_byoc_engine.db2_engine_info.id
-    name       = data.ibm_byoc_engine.db2_engine_info.name
-    type       = data.ibm_byoc_engine.db2_engine_info.type
-    status     = data.ibm_byoc_engine.db2_engine_info.status
-    version    = data.ibm_byoc_engine.db2_engine_info.version
-    endpoint   = data.ibm_byoc_engine.db2_engine_info.endpoint
-    created_at = data.ibm_byoc_engine.db2_engine_info.created_at
-  }
-}
+# output "db2_engine_details" {
+#   description = "Details of the Db2 engine"
+#   value = {
+#     id         = data.ibm_byoc_engine.db2_engine_info.id
+#     name       = data.ibm_byoc_engine.db2_engine_info.name
+#     type       = data.ibm_byoc_engine.db2_engine_info.type
+#     status     = data.ibm_byoc_engine.db2_engine_info.status
+#     version    = data.ibm_byoc_engine.db2_engine_info.version
+#     endpoint   = data.ibm_byoc_engine.db2_engine_info.endpoint
+#     created_at = data.ibm_byoc_engine.db2_engine_info.created_at
+#   }
+# }
 
 # Output all engines on the dataplane
-output "all_engines" {
-  description = "List of all engines on the dataplane"
-  value = [
-    for engine in data.ibm_byoc_engines.all_engines.engines : {
-      id       = engine.id
-      name     = engine.name
-      type     = engine.type
-      status   = engine.status
-      endpoint = engine.endpoint
-    }
-  ]
-}
+# output "all_engines" {
+#   description = "List of all engines on the dataplane"
+#   value = [
+#     for engine in data.ibm_byoc_engines.all_engines.engines : {
+#       id       = engine.id
+#       name     = engine.name
+#       type     = engine.type
+#       status   = engine.status
+#       endpoint = engine.endpoint
+#     }
+#   ]
+# }
 
 # ============================================================================
 # CRUD OPERATIONS GUIDE
