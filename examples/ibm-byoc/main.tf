@@ -60,6 +60,85 @@
 #   }
 # }
 
+
+# ============================================================================
+# DELETE DATAPLANE
+# ============================================================================
+
+# ============================================================================
+# Db2
+# ============================================================================
+# This is a complete, working example you can use immediately to test the API.
+# Just fill in your values in terraform.tfvars and run: terraform apply
+#
+# Prerequisites:
+# 1. Set bearer token: export TF_VAR_bearer_token="your-token"
+# 2. Fill in terraform.tfvars with your subscription_id, dataplane_id, etc.
+# 3. Ensure Azure credentials are set in terraform.tfvars
+#
+# To use this example:
+#   terraform init
+#   terraform plan
+#   terraform apply
+#
+# To clean up:
+#   terraform destroy
+# ============================================================================
+
+# Test Dataplane - Azure
+resource "ibm_byoc_dataplane" "test_azure_dataplane" {
+  subscription_id = var.subscription_id
+  dataplane_id    = var.dataplane_id
+  name            = var.dataplane_name
+  region          = var.azure_region
+  cloud_provider  = "Azure"
+
+  # Azure-specific required fields
+  hyperscaler_subscription_id = var.azure_subscription_id
+  hyperscaler_tenant_id       = var.azure_tenant_id
+
+  timeouts {
+    create = "30m"
+    update = "30m"
+    delete = "30m"
+  }
+}
+
+# Test Engine - Db2 on Azure
+resource "ibm_byoc_engine" "test_db2_engine" {
+  subscription_id = var.subscription_id
+  dataplane_id    = ibm_byoc_dataplane.test_azure_dataplane.dataplane_id
+  engine_name     = var.engine_name
+  engine_type     = "db2"
+
+  # Resource configuration
+  availability_zone = var.availability_zone
+  storage_units     = var.storage_units
+  compute_units     = var.compute_units
+  instance_type     = var.instance_type
+
+  # Network configuration
+  endpoint_type                = var.endpoint_type
+  private_link_service_enabled = var.private_link_service_enabled
+  public_enabled               = var.public_enabled
+
+  # Additional configuration
+  oracle_compatibility = var.oracle_compatibility
+  replicas             = var.replicas
+  plan                 = var.plan
+  profile_name         = var.profile_name
+
+  timeouts {
+    create = "60m"
+    update = "60m"
+    delete = "60m"
+  }
+
+  depends_on = [ibm_byoc_dataplane.test_azure_dataplane]
+}
+# ============================================================================
+
+
 # ============================================================================
 # ENGINE CONFIGURATION
 # ============================================================================
@@ -323,6 +402,41 @@ output "dataplane_details" {
 #
 # DELETE:
 #   terraform destroy
+#
+#   IMPORTANT: Delete API Behavior
+#   --------------------------------
+#   When you run `terraform destroy`, the provider calls the BYOC Delete Dataplane API.
+#
+#   The Delete API performs the following actions:
+#   1. Deletes all engines deployed on the dataplane
+#   2. Removes all cloud resources (VPCs, subnets, security groups, etc.)
+#   3. Deletes the dataplane metadata from BYOC service
+#
+#   Delete Process:
+#   - The API is asynchronous - it initiates deletion and returns immediately
+#   - Cloud resources are deleted in the background by the BYOC service
+#   - The provider waits for deletion to complete (respects timeout settings)
+#   - Default timeout: 30 minutes (configurable in timeouts block)
+#
+#   What gets deleted:
+#   - All database engines on the dataplane
+#   - Cloud provider resources (AWS VPC, Azure VNet, etc.)
+#   - Network configurations (subnets, route tables, security groups)
+#   - Storage resources associated with engines
+#   - Dataplane registration in BYOC service
+#
+#   What does NOT get deleted:
+#   - Your cloud provider account
+#   - IAM roles/service principals (created outside Terraform)
+#   - Any resources created outside the BYOC dataplane
+#
+#   Example with custom timeout:
+#   resource "ibm_byoc_dataplane" "byoc_dataplane" {
+#     # ... configuration ...
+#     timeouts {
+#       delete = "45m"  # Increase if deletion takes longer
+#     }
+#   }
 #
 # ============================================================================
 # DATA SOURCE USAGE EXAMPLES
