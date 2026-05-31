@@ -346,6 +346,64 @@ resource "ibm_byoc_engine" "test_db2_engine" {
 #   dataplane_id    = "existing-dataplane-id"
 # }
 
+# ============================================================================
+# OUTPUTS - Display information from data sources
+# ============================================================================
+
+# Output dataplane information
+# output "dataplane_details" {
+#   description = "Details of the BYOC dataplane"
+#   value = {
+#     id             = data.ibm_byoc_dataplane.dataplane_info.id
+#     name           = data.ibm_byoc_dataplane.dataplane_info.name
+#     cloud_provider = data.ibm_byoc_dataplane.dataplane_info.cloud_provider
+#     region         = data.ibm_byoc_dataplane.dataplane_info.region
+#     status         = data.ibm_byoc_dataplane.dataplane_info.status
+#     created_at     = data.ibm_byoc_dataplane.dataplane_info.created_at
+#   }
+# }
+
+# Output all dataplanes in subscription
+# output "all_dataplanes" {
+#   description = "List of all dataplanes in the subscription"
+#   value = [
+#     for dp in data.ibm_byoc_dataplanes.all_dataplanes.dataplanes : {
+#       id     = dp.id
+#       name   = dp.name
+#       status = dp.status
+#       region = dp.region
+#       cloud  = dp.cloud_provider
+#     }
+#   ]
+# }
+
+# Output Db2 engine information
+# output "db2_engine_details" {
+#   description = "Details of the Db2 engine"
+#   value = {
+#     id         = data.ibm_byoc_engine.db2_engine_info.id
+#     name       = data.ibm_byoc_engine.db2_engine_info.name
+#     type       = data.ibm_byoc_engine.db2_engine_info.type
+#     status     = data.ibm_byoc_engine.db2_engine_info.status
+#     version    = data.ibm_byoc_engine.db2_engine_info.version
+#     endpoint   = data.ibm_byoc_engine.db2_engine_info.endpoint
+#     created_at = data.ibm_byoc_engine.db2_engine_info.created_at
+#   }
+# }
+
+# Output all engines on the dataplane
+# output "all_engines" {
+#   description = "List of all engines on the dataplane"
+#   value = [
+#     for engine in data.ibm_byoc_engines.all_engines.engines : {
+#       id       = engine.id
+#       name     = engine.name
+#       type     = engine.type
+#       status   = engine.status
+#       endpoint = engine.endpoint
+#     }
+#   ]
+# }
 
 # ============================================================================
 # CRUD OPERATIONS GUIDE
