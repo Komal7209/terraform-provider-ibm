@@ -7,7 +7,14 @@ The following resources are supported:
 
 ## Usage
 
-To run this example, execute the following commands:
+**Important**: Before running this example, you must set the BYOC bearer token as an environment variable:
+
+```bash
+export BYOC_BEARER_TOKEN="your-bearer-token-here"
+export IBMCLOUD_BYOC_TOKEN="your-bearer-token-here"
+```
+
+Then execute the following commands:
 
 ```bash
 $ terraform init

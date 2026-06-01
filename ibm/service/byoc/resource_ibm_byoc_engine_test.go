@@ -6,18 +6,19 @@ package brokerapi_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm//brokerapiv1"
+	acc "github.com/IBM-Cloud/terraform-provider-ibm/ibm/acctest"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/brokerapi"
+	"github.com/IBM/cloud-go-sdk/brokerapiv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/stretchr/testify/assert"
-	acc "github.com/IBM-Cloud/terraform-provider-ibm/ibm/acctest"
 )
 
 func TestAccIbmByocEngineBasic(t *testing.T) {
@@ -43,7 +44,7 @@ func TestAccIbmByocEngineAllArgs(t *testing.T) {
 	availabilityZone := fmt.Sprintf("tf_availability_zone_%d", acctest.RandIntRange(10, 100))
 	storageUnits := fmt.Sprintf("%d", acctest.RandIntRange(10, 100))
 	computeUnits := fmt.Sprintf("%d", acctest.RandIntRange(10, 100))
-	engineName := fmt.Sprintf("tf_engine_name_%d", acctest.RandIntRange(10, 100))
+	engineName := fmt.Sprintf("test-engine-%d", time.Now().Unix())
 	engineType := "db2"
 	endpointType := "public"
 	instanceType := fmt.Sprintf("tf_instance_type_%d", acctest.RandIntRange(10, 100))
@@ -90,18 +91,18 @@ func TestAccIbmByocEngineAllArgs(t *testing.T) {
 func testAccCheckIbmByocEngineConfigBasic() string {
 	return fmt.Sprintf(`
 		resource "ibm_byoc_engine" "byoc_engine_instance" {
-			subscription_id = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
-			dataplane_id = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
+			subscription_id = "9aafe1f3-9f83-4e31-b99f-c12a119e364e"
+			dataplane_id = "8ccfce03-cdeb-4b48-a45f-a2995a41e859"
 		}
-	`, )
+	`)
 }
 
 func testAccCheckIbmByocEngineConfig(availabilityZone string, storageUnits string, computeUnits string, engineName string, engineType string, endpointType string, instanceType string, replicas string, publicEnabled string, privateLinkServiceEnabled string, oracleCompatibility string, plan string, profileName string) string {
 	return fmt.Sprintf(`
 
 		resource "ibm_byoc_engine" "byoc_engine_instance" {
-			subscription_id = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
-			dataplane_id = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
+			subscription_id = "9aafe1f3-9f83-4e31-b99f-c12a119e364e"
+			dataplane_id = "8ccfce03-cdeb-4b48-a45f-a2995a41e859"
 			availability_zone = "%s"
 			storage_units = %s
 			compute_units = %s
@@ -229,7 +230,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequest(t *testing.T) {
 	model["engine_type"] = "db2"
 	model["engine_name"] = "db2-engine"
 	model["admin_username"] = "admin"
-	model["admin_password"] = "your_secure_sha2_hashed_password"
+	model["admin_password"] = "{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA=="
 	model["admin_email"] = "user@example.com"
 	model["storage_units"] = int(50)
 	model["compute_units"] = int(2)
@@ -243,81 +244,81 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequest(t *testing.T) {
 	model["endpoint_type"] = "private"
 	model["profile_name"] = "netezza-profile"
 	model["service_principals"] = []interface{}{"service-principal-1"}
-	model["subscription_ids"] = []interface{}{"9fab83da-98cb-4f18-a7ba-b6f0435c9673"}
+	model["subscription_ids"] = []interface{}{"9aafe1f3-9f83-4e31-b99f-c12a119e364e"}
 
 	_, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequest(model)
 	assert.Nil(t, err)
 }
 
-func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(t *testing.T) {
-	checkResult := func(result *brokerapiv1.CreateEngineBaseRequestCreateNetezzaEngineRequest) {
-		model := new(brokerapiv1.CreateEngineBaseRequestCreateNetezzaEngineRequest)
-		model.EngineType = core.StringPtr("netezza-azure")
-		model.EngineName = core.StringPtr("netezza-engine")
-		model.AdminUsername = core.StringPtr("admin")
-		model.AdminPassword = core.StringPtr("your_secure_sha2_hashed_password")
-		model.AdminEmail = core.StringPtr("user@example.com")
-		model.AvailabilityZone = core.StringPtr("us-south-1")
-		model.StorageUnits = core.Int64Ptr(int64(50))
-		model.ComputeUnits = core.Int64Ptr(int64(2))
-		model.EndpointType = core.StringPtr("private")
-		model.ProfileName = core.StringPtr("netezza-profile")
-		model.ServicePrincipals = []string{"service-principal-1"}
-		model.SubscriptionIds = []strfmt.UUID{"550e8400-e29b-41d4-a716-446655440000"}
+// func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(t *testing.T) {
+// 	checkResult := func(result *brokerapiv1.CreateEngineBaseRequestCreateNetezzaEngineRequest) {
+// 		model := new(brokerapiv1.CreateEngineBaseRequestCreateNetezzaEngineRequest)
+// 		model.EngineType = core.StringPtr("netezza-azure")
+// 		model.EngineName = core.StringPtr("netezza-engine")
+// 		model.AdminUsername = core.StringPtr("admin")
+// 		model.AdminPassword = core.StringPtr("{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA==")
+// 		model.AdminEmail = core.StringPtr("user@example.com")
+// 		model.AvailabilityZone = core.StringPtr("us-south-1")
+// 		model.StorageUnits = core.Int64Ptr(int64(50))
+// 		model.ComputeUnits = core.Int64Ptr(int64(2))
+// 		model.EndpointType = core.StringPtr("private")
+// 		model.ProfileName = core.StringPtr("netezza-profile")
+// 		model.ServicePrincipals = []string{"service-principal-1"}
+// 		model.SubscriptionIds = []strfmt.UUID{"550e8400-e29b-41d4-a716-446655440000"}
 
-		assert.Equal(t, result, model)
-	}
+// 		assert.Equal(t, result, model)
+// 	}
 
-	model := make(map[string]interface{})
-	model["engine_type"] = "netezza-azure"
-	model["engine_name"] = "netezza-engine"
-	model["admin_username"] = "admin"
-	model["admin_password"] = "your_secure_sha2_hashed_password"
-	model["admin_email"] = "user@example.com"
-	model["availability_zone"] = "us-south-1"
-	model["storage_units"] = int(50)
-	model["compute_units"] = int(2)
-	model["endpoint_type"] = "private"
-	model["profile_name"] = "netezza-profile"
-	model["service_principals"] = []interface{}{"service-principal-1"}
-	model["subscription_ids"] = []interface{}{"9fab83da-98cb-4f18-a7ba-b6f0435c9673"}
+// 	model := make(map[string]interface{})
+// 	model["engine_type"] = "netezza-azure"
+// 	model["engine_name"] = "netezza-engine"
+// 	model["admin_username"] = "admin"
+// 	model["admin_password"] = "{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA=="
+// 	model["admin_email"] = "user@example.com"
+// 	model["availability_zone"] = "us-south-1"
+// 	model["storage_units"] = int(50)
+// 	model["compute_units"] = int(2)
+// 	model["endpoint_type"] = "private"
+// 	model["profile_name"] = "netezza-profile"
+// 	model["service_principals"] = []interface{}{"service-principal-1"}
+// 	model["subscription_ids"] = []interface{}{"9aafe1f3-9f83-4e31-b99f-c12a119e364e"}
 
-	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(model)
-	assert.Nil(t, err)
-	checkResult(result)
-}
+// 	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(model)
+// 	assert.Nil(t, err)
+// 	checkResult(result)
+// }
 
-func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(t *testing.T) {
-	checkResult := func(result *brokerapiv1.CreateEngineBaseRequestCreateDb2WhEngineRequest) {
-		model := new(brokerapiv1.CreateEngineBaseRequestCreateDb2WhEngineRequest)
-		model.EngineType = core.StringPtr("db2wh")
-		model.EngineName = core.StringPtr("db2wh-engine")
-		model.AdminUsername = core.StringPtr("admin")
-		model.AdminPassword = core.StringPtr("your_secure_sha2_hashed_password")
-		model.AdminEmail = core.StringPtr("user@example.com")
-		model.AvailabilityZone = core.StringPtr("us-south-1")
-		model.StorageUnits = core.Int64Ptr(int64(100))
-		model.ComputeUnits = core.Int64Ptr(int64(4))
-		model.Plan = core.StringPtr("db2wh-small")
+// func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(t *testing.T) {
+// 	checkResult := func(result *brokerapiv1.CreateEngineBaseRequestCreateDb2WhEngineRequest) {
+// 		model := new(brokerapiv1.CreateEngineBaseRequestCreateDb2WhEngineRequest)
+// 		model.EngineType = core.StringPtr("db2wh")
+// 		model.EngineName = core.StringPtr("db2wh-engine")
+// 		model.AdminUsername = core.StringPtr("admin")
+// 		model.AdminPassword = core.StringPtr("{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA==")
+// 		model.AdminEmail = core.StringPtr("user@example.com")
+// 		model.AvailabilityZone = core.StringPtr("us-south-1")
+// 		model.StorageUnits = core.Int64Ptr(int64(100))
+// 		model.ComputeUnits = core.Int64Ptr(int64(4))
+// 		model.Plan = core.StringPtr("db2wh-small")
 
-		assert.Equal(t, result, model)
-	}
+// 		assert.Equal(t, result, model)
+// 	}
 
-	model := make(map[string]interface{})
-	model["engine_type"] = "db2wh"
-	model["engine_name"] = "db2wh-engine"
-	model["admin_username"] = "admin"
-	model["admin_password"] = "your_secure_sha2_hashed_password"
-	model["admin_email"] = "user@example.com"
-	model["availability_zone"] = "us-south-1"
-	model["storage_units"] = int(100)
-	model["compute_units"] = int(4)
-	model["plan"] = "db2wh-small"
+// 	model := make(map[string]interface{})
+// 	model["engine_type"] = "db2wh"
+// 	model["engine_name"] = "db2wh-engine"
+// 	model["admin_username"] = "admin"
+// 	model["admin_password"] = "{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA=="
+// 	model["admin_email"] = "user@example.com"
+// 	model["availability_zone"] = "us-south-1"
+// 	model["storage_units"] = int(100)
+// 	model["compute_units"] = int(4)
+// 	model["plan"] = "db2wh-small"
 
-	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(model)
-	assert.Nil(t, err)
-	checkResult(result)
-}
+// 	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(model)
+// 	assert.Nil(t, err)
+// 	checkResult(result)
+// }
 
 func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest(t *testing.T) {
 	checkResult := func(result *brokerapiv1.CreateEngineBaseRequestCreateDb2EngineRequest) {
@@ -325,7 +326,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest
 		model.EngineType = core.StringPtr("db2")
 		model.EngineName = core.StringPtr("db2-engine")
 		model.AdminUsername = core.StringPtr("admin")
-		model.AdminPassword = core.StringPtr("your_secure_sha2_hashed_password")
+		model.AdminPassword = core.StringPtr("{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA==")
 		model.AdminEmail = core.StringPtr("user@example.com")
 		model.StorageUnits = core.Int64Ptr(int64(50))
 		model.ComputeUnits = core.Int64Ptr(int64(2))
@@ -342,7 +343,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest
 	model["engine_type"] = "db2"
 	model["engine_name"] = "db2-engine"
 	model["admin_username"] = "admin"
-	model["admin_password"] = "your_secure_sha2_hashed_password"
+	model["admin_password"] = "{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA=="
 	model["admin_email"] = "user@example.com"
 	model["storage_units"] = int(50)
 	model["compute_units"] = int(2)

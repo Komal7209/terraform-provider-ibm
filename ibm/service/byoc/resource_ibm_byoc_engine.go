@@ -3,7 +3,7 @@
 
 /*
  * IBM OpenAPI Terraform Generator Version: 3.106.0-09823488-20250707-071701
-*/
+ */
 
 package brokerapi
 
@@ -15,20 +15,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm//brokerapiv1"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/cloud-go-sdk/brokerapiv1"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/go-openapi/strfmt"
 )
 
 func ResourceIbmByocEngine() *schema.Resource {
 	return &schema.Resource{
-		CreateContext:   resourceIbmByocEngineCreate,
-		ReadContext:     resourceIbmByocEngineRead,
-		DeleteContext:   resourceIbmByocEngineDelete,
-		Importer: &schema.ResourceImporter{},
+		CreateContext: resourceIbmByocEngineCreate,
+		ReadContext:   resourceIbmByocEngineRead,
+		DeleteContext: resourceIbmByocEngineDelete,
+		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
 			"subscription_id": &schema.Schema{
@@ -44,108 +44,127 @@ func ResourceIbmByocEngine() *schema.Resource {
 				Description: "Data Plane ID.",
 			},
 			"availability_zone": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"storage_units": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
 			},
 			"compute_units": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
 			},
 			"engine_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"admin_username": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
+				Description: "Admin username for the engine.",
+			},
+			"admin_password": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Sensitive:   true,
+				Description: "Admin password for the engine (SHA-2 hashed).",
+			},
+			"admin_email": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Admin email for the engine.",
 			},
 			"engine_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_byoc_engine", "engine_type"),
 			},
 			"endpoint_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_byoc_engine", "endpoint_type"),
 			},
 			"instance_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"replicas": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
 			},
 			"public_enabled": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
 			},
 			"private_link_service_enabled": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
 			},
 			"oracle_compatibility": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
 			},
 			"plan": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"profile_name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"service_principals": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"subscription_ids": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"engine_status": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"engine_status_message": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"created_at": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"engine_short_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"engine_ui_endpoint": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
+				Type:     schema.TypeList,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"public": &schema.Schema{
@@ -158,8 +177,8 @@ func ResourceIbmByocEngine() *schema.Resource {
 				},
 			},
 			"jdbc_endpoint": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
+				Type:     schema.TypeList,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"private": &schema.Schema{
@@ -192,8 +211,8 @@ func ResourceIbmByocEngine() *schema.Resource {
 				Description: "Status of the linked engine (NULL if linked engine status is DELETE_COMPLETE).",
 			},
 			"version": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}

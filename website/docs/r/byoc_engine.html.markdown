@@ -14,21 +14,25 @@ Create, update, and delete byoc_engines with this resource.
 
 ```hcl
 resource "ibm_byoc_engine" "byoc_engine_instance" {
-  availability_zone = "us-south-1"
-  compute_units = 2
-  dataplane_id = 1e524f4a-d11b-4b16-8a3b-e5e703899a03
-  endpoint_type = "private"
+  subscription_id = "1e524f4a-d11b-4b16-8a3b-e5e703899a03"
+  dataplane_id = "1e524f4a-d11b-4b16-8a3b-e5e703899a03"
+  
   engine_name = "db2-engine"
   engine_type = "db2"
-  instance_type = "Standard_D4s_v5"
-  oracle_compatibility = false
-  plan = "db2wh-small"
-  private_link_service_enabled = true
-  profile_name = "netezza-profile"
-  public_enabled = false
-  replicas = 1
+  admin_username = "admin"
+  admin_password = "your_secure_password"
+  admin_email = "admin@example.com"
+  
+  availability_zone = "us-south-1"
   storage_units = 50
-  subscription_id = 1e524f4a-d11b-4b16-8a3b-e5e703899a03
+  compute_units = 2
+  endpoint_type = "private"
+  instance_type = "Standard_D4s_v5"
+  
+  private_link_service_enabled = true
+  public_enabled = false
+  oracle_compatibility = false
+  replicas = 1
 }
 ```
 
@@ -36,25 +40,28 @@ resource "ibm_byoc_engine" "byoc_engine_instance" {
 
 You can specify the following arguments for this resource.
 
-* `availability_zone` - (Optional, Forces new resource, String) 
-* `compute_units` - (Optional, Forces new resource, Integer) 
-* `dataplane_id` - (Required, Forces new resource, String) Data Plane ID.
-* `endpoint_type` - (Optional, Forces new resource, String) 
-  * Constraints: Allowable values are: `public`, `private`.
-* `engine_name` - (Optional, Forces new resource, String) 
-* `engine_type` - (Optional, Forces new resource, String) 
-  * Constraints: Allowable values are: `db2`, `db2wh`, `netezza-aws`, `netezza-azure`.
-* `instance_type` - (Optional, Forces new resource, String) 
-* `oracle_compatibility` - (Optional, Forces new resource, Boolean) 
-* `plan` - (Optional, Forces new resource, String) 
-* `private_link_service_enabled` - (Optional, Forces new resource, Boolean) 
-* `profile_name` - (Optional, Forces new resource, String) 
-* `public_enabled` - (Optional, Forces new resource, Boolean) 
-* `replicas` - (Optional, Forces new resource, Integer) 
-* `service_principals` - (Optional, Forces new resource, List) 
-* `storage_units` - (Optional, Forces new resource, Integer) 
 * `subscription_id` - (Required, Forces new resource, String) Subscription ID.
-* `subscription_ids` - (Optional, Forces new resource, List) 
+* `dataplane_id` - (Required, Forces new resource, String) Data Plane ID.
+* `admin_username` - (Optional, Forces new resource, String) Admin username for the engine.
+* `admin_password` - (Optional, Forces new resource, String, Sensitive) Admin password for the engine (SHA-2 hashed).
+* `admin_email` - (Optional, Forces new resource, String) Admin email for the engine.
+* `availability_zone` - (Optional, Forces new resource, String) Availability zone for the engine.
+* `compute_units` - (Optional, Forces new resource, Integer) Number of compute units.
+* `endpoint_type` - (Optional, Forces new resource, String) Endpoint type for the engine.
+  * Constraints: Allowable values are: `private`, `public`.
+* `engine_name` - (Optional, Forces new resource, String) Name of the engine.
+* `engine_type` - (Optional, Forces new resource, String) Type of the engine.
+  * Constraints: Allowable values are: `db2`.
+* `instance_type` - (Optional, Forces new resource, String) Instance type for the engine.
+* `oracle_compatibility` - (Optional, Forces new resource, Boolean) Enable Oracle compatibility.
+* `plan` - (Optional, Forces new resource, String) Plan for the engine (e.g., for DB2 Warehouse).
+* `private_link_service_enabled` - (Optional, Forces new resource, Boolean) Enable private link service.
+* `profile_name` - (Optional, Forces new resource, String) Profile name (for Netezza engines).
+* `public_enabled` - (Optional, Forces new resource, Boolean) Enable public access.
+* `replicas` - (Optional, Forces new resource, Integer) Number of replicas.
+* `service_principals` - (Optional, Forces new resource, List) Service principals (for Netezza on AWS).
+* `storage_units` - (Optional, Forces new resource, Integer) Number of storage units.
+* `subscription_ids` - (Optional, Forces new resource, List) Subscription IDs (for Netezza on Azure).
 
 ## Attribute Reference
 

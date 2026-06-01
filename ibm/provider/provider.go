@@ -23,6 +23,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/appid"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/atracker"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/backuprecovery"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/byoc"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/catalogmanagement"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/cdtektonpipeline"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/cdtoolchain"
@@ -76,7 +77,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/vmware"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/vpc"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/byoc"
 )
 
 // Provider returns a *schema.Provider.
@@ -965,8 +965,8 @@ func Provider() *schema.Provider {
 			"ibm_scc_account_notification_settings": scc.DataSourceIBMSccNotificationSettings(),
 
 			// BYOC Services
-			// "ibm_byoc_engine":     byoc.DataSourceIBMByocEngine(),
-			// "ibm_byoc_engines":    byoc.DataSourceIBMByocEngines(),
+			"ibm_byoc_engine":  byoc.DataSourceIbmByocEngine(),
+			"ibm_byoc_engines": byoc.DataSourceIbmByocEngines(),
 
 			// Security and Compliance Center
 			"ibm_scc_instance_settings":        scc.DataSourceIbmSccInstanceSettings(),
@@ -1747,7 +1747,7 @@ func Provider() *schema.Provider {
 			"ibm_scc_scope":                  scc.ResourceIbmSccScope(),
 
 			// BYOC Services
-			"ibm_byoc_engine":    byoc.ResourceIbmByocEngine(),
+			"ibm_byoc_engine": byoc.ResourceIbmByocEngine(),
 
 			// Security Services
 			"ibm_pag_instance": pag.ResourceIBMPag(),
@@ -2372,7 +2372,7 @@ func Validator() validate.ValidatorDict {
 				"ibm_billing_report_snapshot": usagereports.ResourceIBMBillingReportSnapshotValidator(),
 
 				// BYOC Services
-				"ibm_byoc_engine":    byoc.ResourceIbmByocEngineValidator(),
+				"ibm_byoc_engine": byoc.ResourceIbmByocEngineValidator(),
 
 				// // Added for Secrets Manager
 				"ibm_sm_secret_group":                                                secretsmanager.ResourceIbmSmSecretGroupValidator(),
@@ -2863,7 +2863,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		RiaasEndPoint:         riaasEndPoint,
 		IAMToken:              iamToken,
 		IAMRefreshToken:       iamRefreshToken,
-		BYOCBearerToken: 	   byocBearerToken,
+		BYOCBearerToken:       byocBearerToken,
 		Zone:                  zone,
 		Visibility:            visibility,
 		PrivateEndpointType:   privateEndpointType,
