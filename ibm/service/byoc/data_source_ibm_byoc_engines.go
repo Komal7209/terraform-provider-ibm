@@ -5,7 +5,7 @@
  * IBM OpenAPI Terraform Generator Version: 3.106.0-09823488-20250707-071701
  */
 
-package brokerapi
+package byoc
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/cloud-go-sdk/brokerapiv1"
-	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/go-openapi/strfmt"
 )
 
 func DataSourceIbmByocEngines() *schema.Resource {
@@ -223,12 +223,15 @@ func dataSourceIbmByocEnginesRead(context context.Context, d *schema.ResourceDat
 		return tfErr.GetDiag()
 	}
 
+	subscriptionID := strfmt.UUID(d.Get("subscription_id").(string))
+	dataplaneID := strfmt.UUID(d.Get("dataplane_id").(string))
+
 	getEnginesOptions := brokerApiClient.NewGetEnginesOptions(
-		d.Get("subscription_id").(string),
-		d.Get("dataplane_id").(string),
+		&subscriptionID,
+		&dataplaneID,
 	)
 
-	getEnginesResponseIntf, response, err := brokerApiClient.GetEnginesWithContext(context, getEnginesOptions)
+	getEnginesResponseIntf, _, err := brokerApiClient.GetEnginesWithContext(context, getEnginesOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetEnginesWithContext failed: %s", err.Error()), "(Data) ibm_byoc_engines", "read")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
@@ -238,9 +241,16 @@ func dataSourceIbmByocEnginesRead(context context.Context, d *schema.ResourceDat
 	d.SetId(fmt.Sprintf("%s/%s", d.Get("subscription_id").(string), d.Get("dataplane_id").(string)))
 
 	engines := []map[string]interface{}{}
-	for _, engineIntf := range getEnginesResponseIntf {
+	for i, engineIntf := range getEnginesResponseIntf {
+		log.Printf("[DEBUG] Processing engine %d, type: %T", i, engineIntf)
 		engineMap := dataSourceIbmByocEnginesGetEnginesResponseToMap(engineIntf)
+		log.Printf("[DEBUG] Engine %d map: %+v", i, engineMap)
 		engines = append(engines, engineMap)
+	}
+
+	log.Printf("[DEBUG] Total engines processed: %d", len(engines))
+	if len(engines) > 0 {
+		log.Printf("[DEBUG] First engine map keys: %v", engines[0])
 	}
 
 	if err = d.Set("engines", engines); err != nil {
@@ -253,10 +263,18 @@ func dataSourceIbmByocEnginesRead(context context.Context, d *schema.ResourceDat
 func dataSourceIbmByocEnginesGetEnginesResponseToMap(model brokerapiv1.GetEnginesResponseIntf) map[string]interface{} {
 	modelMap := make(map[string]interface{})
 
+	log.Printf("[DEBUG] Converting engine model, type: %T, value: %+v", model, model)
+
 	// Handle discriminated union types
 	if db2Engine, ok := model.(*brokerapiv1.GetEnginesResponseGetDb2EngineResponse); ok {
+		log.Printf("[DEBUG] Processing DB2 engine, EngineID: %v", db2Engine.EngineID)
+		// Always set engine_id, even if empty, to ensure the field exists in the map
 		if db2Engine.EngineID != nil {
 			modelMap["engine_id"] = *db2Engine.EngineID
+			log.Printf("[DEBUG] Set engine_id to: %s", *db2Engine.EngineID)
+		} else {
+			modelMap["engine_id"] = ""
+			log.Printf("[WARN] DB2 EngineID was nil, set to empty string")
 		}
 		if db2Engine.DataplaneID != nil {
 			modelMap["dataplane_id"] = *db2Engine.DataplaneID
@@ -294,18 +312,7 @@ func dataSourceIbmByocEnginesGetEnginesResponseToMap(model brokerapiv1.GetEngine
 		if db2Engine.OracleCompatibility != nil {
 			modelMap["oracle_compatibility"] = *db2Engine.OracleCompatibility
 		}
-		if db2Engine.Plan != nil {
-			modelMap["plan"] = *db2Engine.Plan
-		}
-		if db2Engine.ProfileName != nil {
-			modelMap["profile_name"] = *db2Engine.ProfileName
-		}
-		if db2Engine.ServicePrincipals != nil {
-			modelMap["service_principals"] = db2Engine.ServicePrincipals
-		}
-		if db2Engine.SubscriptionIds != nil {
-			modelMap["subscription_ids"] = db2Engine.SubscriptionIds
-		}
+		// Note: Plan, ProfileName, ServicePrincipals, and SubscriptionIds are not available for DB2 engine type
 		if db2Engine.Tags != nil {
 			modelMap["tags"] = db2Engine.Tags
 		}
@@ -441,7 +448,15 @@ func dataSourceIbmByocEnginesGetEnginesResponseToMap(model brokerapiv1.GetEngine
 		if netezzaEngine.Version != nil {
 			modelMap["version"] = *netezzaEngine.Version
 		}
+	} else {
+		// None of the known engine types matched
+		log.Printf("[ERROR] Unknown engine type received: %T", model)
+		log.Printf("[ERROR] Engine value: %+v", model)
+		// Return empty map with at least the type information
+		modelMap["engine_type"] = "unknown"
+		modelMap["engine_status"] = "unknown"
 	}
 
+	log.Printf("[DEBUG] Final modelMap: %+v", modelMap)
 	return modelMap
 }

@@ -1,14 +1,14 @@
 // Copyright IBM Corp. 2026 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
-package brokerapi_test
+package byoc_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	acc "github.com/IBM-Cloud/terraform-provider-ibm/ibm/acctest"
 )
@@ -82,7 +82,11 @@ func testAccCheckIbmByocEngineDataSourceConfig() string {
 			admin_email     = "admin@example.com"
 			storage_units   = 50
 			compute_units   = 2
-			endpoint_type   = "private"
+			instance_type   = "Standard_D4s_v5"
+			replicas        = 1
+			private_link_service_enabled = true
+			public_enabled  = false
+			oracle_compatibility = false
 		}
 
 		data "ibm_byoc_engine" "byoc_engine_data" {

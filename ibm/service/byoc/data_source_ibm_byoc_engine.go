@@ -5,7 +5,7 @@
  * IBM OpenAPI Terraform Generator Version: 3.106.0-09823488-20250707-071701
  */
 
-package brokerapi
+package byoc
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/cloud-go-sdk/brokerapiv1"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/go-openapi/strfmt"
 )
 
 func DataSourceIbmByocEngine() *schema.Resource {
@@ -209,13 +210,17 @@ func dataSourceIbmByocEngineRead(context context.Context, d *schema.ResourceData
 		return tfErr.GetDiag()
 	}
 
+	subscriptionID := strfmt.UUID(d.Get("subscription_id").(string))
+	dataplaneID := strfmt.UUID(d.Get("dataplane_id").(string))
+	engineID := strfmt.UUID(d.Get("engine_id").(string))
+
 	getEngineByIdOptions := brokerApiClient.NewGetEngineByIdOptions(
-		d.Get("subscription_id").(string),
-		d.Get("dataplane_id").(string),
-		d.Get("engine_id").(string),
+		&subscriptionID,
+		&dataplaneID,
+		&engineID,
 	)
 
-	getEngineByIdResponseIntf, response, err := brokerApiClient.GetEngineByIDWithContext(context, getEngineByIdOptions)
+	getEngineByIdResponseIntf, _, err := brokerApiClient.GetEngineByIDWithContext(context, getEngineByIdOptions)
 	if err != nil {
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetEngineByIDWithContext failed: %s", err.Error()), "(Data) ibm_byoc_engine", "read")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())

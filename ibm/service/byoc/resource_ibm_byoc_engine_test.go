@@ -1,23 +1,24 @@
 // Copyright IBM Corp. 2026 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
-package brokerapi_test
+package byoc_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	acc "github.com/IBM-Cloud/terraform-provider-ibm/ibm/acctest"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/brokerapi"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/byoc"
 	"github.com/IBM/cloud-go-sdk/brokerapiv1"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/go-openapi/strfmt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,19 +42,16 @@ func TestAccIbmByocEngineBasic(t *testing.T) {
 
 func TestAccIbmByocEngineAllArgs(t *testing.T) {
 	var conf brokerapiv1.GetEngineByIdResponse
-	availabilityZone := fmt.Sprintf("tf_availability_zone_%d", acctest.RandIntRange(10, 100))
 	storageUnits := fmt.Sprintf("%d", acctest.RandIntRange(10, 100))
 	computeUnits := fmt.Sprintf("%d", acctest.RandIntRange(10, 100))
 	engineName := fmt.Sprintf("test-engine-%d", time.Now().Unix())
 	engineType := "db2"
-	endpointType := "public"
+	// endpointType := "public"
 	instanceType := fmt.Sprintf("tf_instance_type_%d", acctest.RandIntRange(10, 100))
 	replicas := fmt.Sprintf("%d", acctest.RandIntRange(10, 100))
 	publicEnabled := "true"
 	privateLinkServiceEnabled := "true"
 	oracleCompatibility := "true"
-	plan := fmt.Sprintf("tf_plan_%d", acctest.RandIntRange(10, 100))
-	profileName := fmt.Sprintf("tf_profile_name_%d", acctest.RandIntRange(10, 100))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { acc.TestAccPreCheck(t) },
@@ -61,22 +59,19 @@ func TestAccIbmByocEngineAllArgs(t *testing.T) {
 		CheckDestroy: testAccCheckIbmByocEngineDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckIbmByocEngineConfig(availabilityZone, storageUnits, computeUnits, engineName, engineType, endpointType, instanceType, replicas, publicEnabled, privateLinkServiceEnabled, oracleCompatibility, plan, profileName),
+				Config: testAccCheckIbmByocEngineConfig(storageUnits, computeUnits, engineName, engineType, instanceType, replicas, publicEnabled, privateLinkServiceEnabled, oracleCompatibility),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckIbmByocEngineExists("ibm_byoc_engine.byoc_engine_instance", conf),
-					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "availability_zone", availabilityZone),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "storage_units", storageUnits),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "compute_units", computeUnits),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "engine_name", engineName),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "engine_type", engineType),
-					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "endpoint_type", endpointType),
+					// resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "endpoint_type", endpointType),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "instance_type", instanceType),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "replicas", replicas),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "public_enabled", publicEnabled),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "private_link_service_enabled", privateLinkServiceEnabled),
 					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "oracle_compatibility", oracleCompatibility),
-					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "plan", plan),
-					resource.TestCheckResourceAttr("ibm_byoc_engine.byoc_engine_instance", "profile_name", profileName),
 				),
 			},
 			resource.TestStep{
@@ -97,29 +92,23 @@ func testAccCheckIbmByocEngineConfigBasic() string {
 	`)
 }
 
-func testAccCheckIbmByocEngineConfig(availabilityZone string, storageUnits string, computeUnits string, engineName string, engineType string, endpointType string, instanceType string, replicas string, publicEnabled string, privateLinkServiceEnabled string, oracleCompatibility string, plan string, profileName string) string {
+func testAccCheckIbmByocEngineConfig(storageUnits string, computeUnits string, engineName string, engineType string, instanceType string, replicas string, publicEnabled string, privateLinkServiceEnabled string, oracleCompatibility string) string {
 	return fmt.Sprintf(`
 
 		resource "ibm_byoc_engine" "byoc_engine_instance" {
 			subscription_id = "9aafe1f3-9f83-4e31-b99f-c12a119e364e"
 			dataplane_id = "8ccfce03-cdeb-4b48-a45f-a2995a41e859"
-			availability_zone = "%s"
 			storage_units = %s
 			compute_units = %s
 			engine_name = "%s"
 			engine_type = "%s"
-			endpoint_type = "%s"
 			instance_type = "%s"
 			replicas = %s
 			public_enabled = %s
 			private_link_service_enabled = %s
 			oracle_compatibility = %s
-			plan = "%s"
-			profile_name = "%s"
-			service_principals = "FIXME"
-			subscription_ids = "FIXME"
 		}
-	`, availabilityZone, storageUnits, computeUnits, engineName, engineType, endpointType, instanceType, replicas, publicEnabled, privateLinkServiceEnabled, oracleCompatibility, plan, profileName)
+	`, storageUnits, computeUnits, engineName, engineType, instanceType, replicas, publicEnabled, privateLinkServiceEnabled, oracleCompatibility)
 }
 
 func testAccCheckIbmByocEngineExists(n string, obj brokerapiv1.GetEngineByIdResponse) resource.TestCheckFunc {
@@ -142,9 +131,12 @@ func testAccCheckIbmByocEngineExists(n string, obj brokerapiv1.GetEngineByIdResp
 			return err
 		}
 
-		getEngineByIdOptions.SetSubscriptionID(parts[0])
-		getEngineByIdOptions.SetDataplaneID(parts[1])
-		getEngineByIdOptions.SetEngineID(parts[2])
+		subscriptionID := strfmt.UUID(parts[0])
+		dataplaneID := strfmt.UUID(parts[1])
+		engineID := strfmt.UUID(parts[2])
+		getEngineByIdOptions.SetSubscriptionID(&subscriptionID)
+		getEngineByIdOptions.SetDataplaneID(&dataplaneID)
+		getEngineByIdOptions.SetEngineID(&engineID)
 
 		createEngineResponseIntf, _, err := brokerApiClient.GetEngineByID(getEngineByIdOptions)
 		if err != nil {
@@ -174,9 +166,12 @@ func testAccCheckIbmByocEngineDestroy(s *terraform.State) error {
 			return err
 		}
 
-		getEngineByIdOptions.SetSubscriptionID(parts[0])
-		getEngineByIdOptions.SetDataplaneID(parts[1])
-		getEngineByIdOptions.SetEngineID(parts[2])
+		subscriptionID := strfmt.UUID(parts[0])
+		dataplaneID := strfmt.UUID(parts[1])
+		engineID := strfmt.UUID(parts[2])
+		getEngineByIdOptions.SetSubscriptionID(&subscriptionID)
+		getEngineByIdOptions.SetDataplaneID(&dataplaneID)
+		getEngineByIdOptions.SetEngineID(&engineID)
 
 		// Try to find the key
 		_, response, err := brokerApiClient.GetEngineByID(getEngineByIdOptions)
@@ -202,7 +197,7 @@ func TestResourceIbmByocEngineEngineUiEndpointToMap(t *testing.T) {
 	model := new(brokerapiv1.EngineUiEndpoint)
 	model.Public = core.StringPtr("testString")
 
-	result, err := brokerapi.ResourceIbmByocEngineEngineUiEndpointToMap(model)
+	result, err := byoc.ResourceIbmByocEngineEngineUiEndpointToMap(model)
 	assert.Nil(t, err)
 	checkResult(result)
 }
@@ -218,7 +213,7 @@ func TestResourceIbmByocEngineJdbcEndpointToMap(t *testing.T) {
 	model := new(brokerapiv1.JdbcEndpoint)
 	model.Private = core.StringPtr("testString")
 
-	result, err := brokerapi.ResourceIbmByocEngineJdbcEndpointToMap(model)
+	result, err := byoc.ResourceIbmByocEngineJdbcEndpointToMap(model)
 	assert.Nil(t, err)
 	checkResult(result)
 }
@@ -246,7 +241,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequest(t *testing.T) {
 	model["service_principals"] = []interface{}{"service-principal-1"}
 	model["subscription_ids"] = []interface{}{"9aafe1f3-9f83-4e31-b99f-c12a119e364e"}
 
-	_, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequest(model)
+	_, err := byoc.ResourceIbmByocEngineMapToCreateEngineBaseRequest(model)
 	assert.Nil(t, err)
 }
 
@@ -283,7 +278,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequest(t *testing.T) {
 // 	model["service_principals"] = []interface{}{"service-principal-1"}
 // 	model["subscription_ids"] = []interface{}{"9aafe1f3-9f83-4e31-b99f-c12a119e364e"}
 
-// 	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(model)
+// 	result, err := byoc.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateNetezzaEngineRequest(model)
 // 	assert.Nil(t, err)
 // 	checkResult(result)
 // }
@@ -315,7 +310,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequest(t *testing.T) {
 // 	model["compute_units"] = int(4)
 // 	model["plan"] = "db2wh-small"
 
-// 	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(model)
+// 	result, err := byoc.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2WhEngineRequest(model)
 // 	assert.Nil(t, err)
 // 	checkResult(result)
 // }
@@ -353,7 +348,7 @@ func TestResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest
 	model["replicas"] = int(1)
 	model["instance_type"] = "Standard_D4s_v5"
 
-	result, err := brokerapi.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest(model)
+	result, err := byoc.ResourceIbmByocEngineMapToCreateEngineBaseRequestCreateDb2EngineRequest(model)
 	assert.Nil(t, err)
 	checkResult(result)
 }

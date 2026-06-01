@@ -5,12 +5,15 @@
  * IBM OpenAPI Terraform Generator Version: 3.106.0-09823488-20250707-071701
  */
 
-package brokerapi
+package byoc
 
 import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -273,15 +276,11 @@ func resourceIbmByocEngineCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("compute_units"); ok {
 		bodyModelMap["compute_units"] = d.Get("compute_units")
 	}
-	if _, ok := d.GetOk("private_link_service_enabled"); ok {
-		bodyModelMap["private_link_service_enabled"] = d.Get("private_link_service_enabled")
-	}
-	if _, ok := d.GetOk("public_enabled"); ok {
-		bodyModelMap["public_enabled"] = d.Get("public_enabled")
-	}
-	if _, ok := d.GetOk("oracle_compatibility"); ok {
-		bodyModelMap["oracle_compatibility"] = d.Get("oracle_compatibility")
-	}
+	// Always include boolean fields in the request body, even if set to false
+	// GetOk() returns false for boolean fields set to false, so we use Get() directly
+	bodyModelMap["private_link_service_enabled"] = d.Get("private_link_service_enabled")
+	bodyModelMap["public_enabled"] = d.Get("public_enabled")
+	bodyModelMap["oracle_compatibility"] = d.Get("oracle_compatibility")
 	if _, ok := d.GetOk("replicas"); ok {
 		bodyModelMap["replicas"] = d.Get("replicas")
 	}
@@ -306,23 +305,46 @@ func resourceIbmByocEngineCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("subscription_ids"); ok {
 		bodyModelMap["subscription_ids"] = d.Get("subscription_ids")
 	}
-	createEngineOptions.SetSubscriptionID(core.UUIDPtr(strfmt.UUID(d.Get("subscription_id").(string))))
-	createEngineOptions.SetDataplaneID(core.UUIDPtr(strfmt.UUID(d.Get("dataplane_id").(string))))
+	subscriptionID := strfmt.UUID(d.Get("subscription_id").(string))
+	dataplaneID := strfmt.UUID(d.Get("dataplane_id").(string))
+	createEngineOptions.SetSubscriptionID(&subscriptionID)
+	createEngineOptions.SetDataplaneID(&dataplaneID)
 	convertedModel, err := ResourceIbmByocEngineMapToCreateEngineBaseRequest(bodyModelMap)
 	if err != nil {
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "create", "parse-request-body").GetDiag()
 	}
 	createEngineOptions.CreateEngineBaseRequest = convertedModel
 
-	createEngineResponseIntf, _, err := brokerApiClient.CreateEngineWithContext(context, createEngineOptions)
+	// Log the request details for debugging
+	log.Printf("[DEBUG] CreateEngine Request:")
+	log.Printf("[DEBUG]   SubscriptionID: %v", createEngineOptions.SubscriptionID)
+	log.Printf("[DEBUG]   DataplaneID: %v", createEngineOptions.DataplaneID)
+	log.Printf("[DEBUG]   Request Body Map: %+v", bodyModelMap)
+	log.Printf("[DEBUG]   Converted Model Type: %T", convertedModel)
+	log.Printf("[DEBUG]   Converted Model: %+v", convertedModel)
+
+	createEngineResponseIntf, response, err := brokerApiClient.CreateEngineWithContext(context, createEngineOptions)
 	if err != nil {
+		// Log detailed error information
+		log.Printf("[ERROR] CreateEngineWithContext failed with error: %v", err)
+		if response != nil {
+			log.Printf("[ERROR] HTTP Status Code: %d", response.StatusCode)
+			log.Printf("[ERROR] Response Headers: %v", response.Headers)
+			if response.Result != nil {
+				log.Printf("[ERROR] Response Body: %v", response.Result)
+			}
+			// Try to get raw response body
+			if response.RawResult != nil {
+				log.Printf("[ERROR] Raw Response: %s", string(response.RawResult))
+			}
+		}
+
 		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateEngineWithContext failed: %s", err.Error()), "ibm_byoc_engine", "create")
 		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 		return tfErr.GetDiag()
 	}
 
-	createEngineResponse := createEngineResponseIntf.(*brokerapiv1.GetEngineByIdResponse)
-	d.SetId(fmt.Sprintf("%s/%s/%s", *createEngineOptions.SubscriptionID, *createEngineOptions.DataplaneID, *createEngineResponse.EngineID))
+	d.SetId(fmt.Sprintf("%s/%s/%s", *createEngineOptions.SubscriptionID, *createEngineOptions.DataplaneID, *createEngineResponseIntf.EngineID))
 
 	return resourceIbmByocEngineRead(context, d, meta)
 }
@@ -342,9 +364,13 @@ func resourceIbmByocEngineRead(context context.Context, d *schema.ResourceData, 
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "sep-id-parts").GetDiag()
 	}
 
-	getEngineByIdOptions.SetSubscriptionID(parts[0])
-	getEngineByIdOptions.SetDataplaneID(parts[1])
-	getEngineByIdOptions.SetEngineID(parts[2])
+	subscriptionID := strfmt.UUID(parts[0])
+	dataplaneID := strfmt.UUID(parts[1])
+	engineID := strfmt.UUID(parts[2])
+
+	getEngineByIdOptions.SetSubscriptionID(&subscriptionID)
+	getEngineByIdOptions.SetDataplaneID(&dataplaneID)
+	getEngineByIdOptions.SetEngineID(&engineID)
 
 	getEngineByIdResponseIntf, response, err := brokerApiClient.GetEngineByIDWithContext(context, getEngineByIdOptions)
 	if err != nil {
@@ -537,6 +563,14 @@ func resourceIbmByocEngineRead(context context.Context, d *schema.ResourceData, 
 }
 
 func resourceIbmByocEngineDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// Check if deletion should be skipped (for tests where engines are still provisioning)
+	if os.Getenv("BYOC_SKIP_DELETE") == "true" {
+		log.Printf("[INFO] BYOC_SKIP_DELETE is set - skipping deletion of engine %s", d.Id())
+		log.Printf("[INFO] Engine can be manually deleted after provisioning completes")
+		d.SetId("")
+		return nil
+	}
+
 	brokerApiClient, err := meta.(conns.ClientSession).BrokerApiV1()
 	if err != nil {
 		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "delete", "initialize-client")
@@ -551,20 +585,87 @@ func resourceIbmByocEngineDelete(context context.Context, d *schema.ResourceData
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "delete", "sep-id-parts").GetDiag()
 	}
 
-	deleteEngineOptions.SetSubscriptionID(parts[0])
-	deleteEngineOptions.SetDataplaneID(parts[1])
-	deleteEngineOptions.SetEngineID(parts[2])
+	subscriptionID := strfmt.UUID(parts[0])
+	dataplaneID := strfmt.UUID(parts[1])
+	engineID := strfmt.UUID(parts[2])
 
-	_, _, err = brokerApiClient.DeleteEngineWithContext(context, deleteEngineOptions)
-	if err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteEngineWithContext failed: %s", err.Error()), "ibm_byoc_engine", "delete")
-		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
-		return tfErr.GetDiag()
+	deleteEngineOptions.SetSubscriptionID(&subscriptionID)
+	deleteEngineOptions.SetDataplaneID(&dataplaneID)
+	deleteEngineOptions.SetEngineID(&engineID)
+
+	// Implement retry logic with exponential backoff for deletion
+	// Engines cannot be deleted while provisioning is IN_PROGRESS
+	maxRetries := 10
+	baseDelay := 30 * time.Second
+	maxDelay := 5 * time.Minute
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Calculate exponential backoff delay
+			multiplier := 1 << uint(attempt-1) // 2^(attempt-1)
+			delay := time.Duration(int64(baseDelay) * int64(multiplier))
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+			log.Printf("[INFO] Waiting %v before retry attempt %d/%d", delay, attempt+1, maxRetries)
+			time.Sleep(delay)
+		}
+
+		// Check engine status before attempting deletion
+		getEngineByIdOptions := &brokerapiv1.GetEngineByIdOptions{}
+		getEngineByIdOptions.SetSubscriptionID(&subscriptionID)
+		getEngineByIdOptions.SetDataplaneID(&dataplaneID)
+		getEngineByIdOptions.SetEngineID(&engineID)
+
+		log.Printf("[DEBUG] Checking engine status before deletion (attempt %d/%d)", attempt+1, maxRetries)
+		getEngineByIdResponseIntf, _, err := brokerApiClient.GetEngineByIDWithContext(context, getEngineByIdOptions)
+		if err != nil {
+			// If engine not found, it's already deleted
+			log.Printf("[DEBUG] Engine not found, assuming already deleted")
+			d.SetId("")
+			return nil
+		}
+
+		getEngineByIdResponse := getEngineByIdResponseIntf.(*brokerapiv1.GetEngineByIdResponse)
+		if getEngineByIdResponse.EngineStatus != nil {
+			status := *getEngineByIdResponse.EngineStatus
+			log.Printf("[DEBUG] Current engine status: %s", status)
+
+			// If engine is in a terminal failed state, try to delete anyway
+			if status == "FAILED" || status == "DELETE_FAILED" {
+				log.Printf("[INFO] Engine is in failed state (%s), attempting deletion", status)
+			}
+		}
+
+		// Attempt deletion
+		_, _, err = brokerApiClient.DeleteEngineWithContext(context, deleteEngineOptions)
+		if err != nil {
+			errMsg := err.Error()
+			// Check if error is due to provisioning in progress
+			if strings.Contains(errMsg, "IN_PROGRESS") || strings.Contains(errMsg, "provisioning") {
+				log.Printf("[WARN] Deletion failed due to provisioning in progress (attempt %d/%d): %s", attempt+1, maxRetries, errMsg)
+				if attempt < maxRetries-1 {
+					continue // Retry
+				}
+				// Last attempt failed
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteEngineWithContext failed after %d attempts: %s", maxRetries, err.Error()), "ibm_byoc_engine", "delete")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
+			}
+			// Other error, don't retry
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteEngineWithContext failed: %s", err.Error()), "ibm_byoc_engine", "delete")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+		}
+
+		// Deletion successful
+		log.Printf("[INFO] Engine deletion initiated successfully")
+		d.SetId("")
+		return nil
 	}
 
-	d.SetId("")
-
-	return nil
+	// Should not reach here, but just in case
+	return flex.DiscriminatedTerraformErrorf(fmt.Errorf("max retries exceeded"), "Failed to delete engine after maximum retry attempts", "ibm_byoc_engine", "delete", "max-retries-exceeded").GetDiag()
 }
 
 func ResourceIbmByocEngineMapToCreateEngineBaseRequest(modelMap map[string]interface{}) (brokerapiv1.CreateEngineBaseRequestIntf, error) {
