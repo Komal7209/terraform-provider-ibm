@@ -7,6 +7,9 @@ resource "ibm_byoc_engine" "byoc_engine_instance" {
   compute_units = var.byoc_engine_compute_units
   engine_name = var.byoc_engine_engine_name
   engine_type = var.byoc_engine_engine_type
+  admin_username = var.byoc_engine_admin_username
+  admin_password = var.byoc_engine_admin_password
+  admin_email = var.byoc_engine_admin_email
   endpoint_type = var.byoc_engine_endpoint_type
   instance_type = var.byoc_engine_instance_type
   replicas = var.byoc_engine_replicas

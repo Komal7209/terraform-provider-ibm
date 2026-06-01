@@ -2,22 +2,16 @@ variable "ibmcloud_api_key" {
   description = "IBM Cloud API key"
   type        = string
 }
-
-variable "byoc_bearer_token" {   
-    description = "Bearer token for BYOC API"
-    type        = string
-}
-
 // Resource arguments for byoc_engine
 variable "byoc_engine_subscription_id" {
-  description = "Subscription ID."
+  description = "Subscription ID"
   type        = string
-  default     = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
+  default     = "9aafe1f3-9f83-4e31-b99f-c12a119e364e"
 }
 variable "byoc_engine_dataplane_id" {
-  description = "Data Plane ID."
+  description = "Dataplane ID"
   type        = string
-  default     = "9fab83da-98cb-4f18-a7ba-b6f0435c9673"
+  default     = "8ccfce03-cdeb-4b48-a45f-a2995a41e859"
 }
 variable "byoc_engine_availability_zone" {
   description = ""
@@ -40,9 +34,25 @@ variable "byoc_engine_engine_name" {
   default     = "db2-engine"
 }
 variable "byoc_engine_engine_type" {
-  description = ""
+  description = "Type of the engine (db2, db2wh, netezza)"
   type        = string
   default     = "db2"
+}
+variable "byoc_engine_admin_username" {
+  description = "Admin username for the engine"
+  type        = string
+  default     = "admin"
+}
+variable "byoc_engine_admin_password" {
+  description = "Admin password for the engine (SHA-2 hashed)"
+  type        = string
+  default     = "{SHA2}R/dfwhLaP217XwTB3IBjoqH3G1oxMA=="
+  sensitive   = true
+}
+variable "byoc_engine_admin_email" {
+  description = "Admin email for the engine"
+  type        = string
+  default     = "admin@example.com"
 }
 variable "byoc_engine_endpoint_type" {
   description = ""

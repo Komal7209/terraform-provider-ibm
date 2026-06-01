@@ -37,6 +37,9 @@ resource "ibm_byoc_engine" "byoc_engine_instance" {
   compute_units = var.byoc_engine_compute_units
   engine_name = var.byoc_engine_engine_name
   engine_type = var.byoc_engine_engine_type
+  admin_username = var.byoc_engine_admin_username
+  admin_password = var.byoc_engine_admin_password
+  admin_email = var.byoc_engine_admin_email
   endpoint_type = var.byoc_engine_endpoint_type
   instance_type = var.byoc_engine_instance_type
   replicas = var.byoc_engine_replicas
@@ -55,23 +58,26 @@ resource "ibm_byoc_engine" "byoc_engine_instance" {
 | Name | Description | Type | Required |
 |------|-------------|------|---------|
 | ibmcloud\_api\_key | IBM Cloud API key | `string` | true |
-| subscription_id | Subscription ID. | `` | true |
-| dataplane_id | Data Plane ID. | `` | true |
-| availability_zone |  | `string` | false |
-| storage_units |  | `number` | false |
-| compute_units |  | `number` | false |
-| engine_name |  | `string` | false |
-| engine_type |  | `string` | false |
-| endpoint_type |  | `string` | false |
-| instance_type |  | `string` | false |
-| replicas |  | `number` | false |
-| public_enabled |  | `bool` | false |
-| private_link_service_enabled |  | `bool` | false |
-| oracle_compatibility |  | `bool` | false |
-| plan |  | `string` | false |
-| profile_name |  | `string` | false |
-| service_principals |  | `list(string)` | false |
-| subscription_ids |  | `list(string)` | false |
+| subscription_id | Subscription ID | `string` | true |
+| dataplane_id | Data Plane ID | `string` | true |
+| engine_type | Type of the engine (db2, db2wh, netezza) | `string` | true |
+| admin_username | Admin username for the engine | `string` | true |
+| admin_password | Admin password for the engine (SHA-2 hashed) | `string` | true |
+| admin_email | Admin email for the engine | `string` | true |
+| instance_type | Azure instance type (e.g., Standard_D4s_v5) | `string` | true |
+| replicas | Number of replicas | `number` | true |
+| private_link_service_enabled | Enable private link service | `bool` | true |
+| public_enabled | Enable public access | `bool` | true |
+| availability_zone | Availability zone | `string` | false |
+| storage_units | Number of storage units | `number` | false |
+| compute_units | Number of compute units | `number` | false |
+| engine_name | Name of the engine | `string` | false |
+| endpoint_type | Endpoint type | `string` | false |
+| oracle_compatibility | Enable Oracle compatibility | `bool` | false |
+| plan | Plan name | `string` | false |
+| profile_name | Profile name | `string` | false |
+| service_principals | Service principals | `list(string)` | false |
+| subscription_ids | Subscription IDs | `list(string)` | false |
 
 #### Outputs
 
@@ -93,11 +99,17 @@ resource "ibm_byoc_engine" "byoc_engine_instance" {
 
 ## Assumptions
 
-1. TODO
+1. You have a valid IBM Cloud account with access to BYOC services
+2. You have obtained a BYOC bearer token and set it as an environment variable
+3. You have valid subscription_id and dataplane_id values
 
 ## Notes
 
-1. TODO
+1. The `admin_password` must be SHA-2 hashed
+2. The `engine_type` field is required and determines the type of engine to create (db2, db2wh, or netezza)
+3. Admin credentials (`admin_username`, `admin_password`, `admin_email`) are required for engine creation
+4. Engines take time to provision and cannot be deleted while in IN_PROGRESS state
+5. Use valid Azure instance types for the `instance_type` field (e.g., Standard_D4s_v5)
 
 ## Requirements
 
