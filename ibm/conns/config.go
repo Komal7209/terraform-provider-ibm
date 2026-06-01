@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/IBM/cloud-db2-go-sdk/db2saasv1"
+	"github.com/IBM/cloud-go-sdk/brokerapiv1"
 
 	// Added code for the Power Colo Offering
 
@@ -217,6 +218,9 @@ type Config struct {
 	// IAM Refresh Token
 	IAMRefreshToken string
 
+	// BYOC Bearer Token (separate from IAM token)
+	BYOCBearerToken string
+
 	// Zone
 	Zone                string
 	Visibility          string
@@ -346,6 +350,7 @@ type ClientSession interface {
 	DrAutomationServiceV1() (*drautomationservicev1.DrAutomationServiceV1, error)
 	PlatformNotificationsV1() (*platformnotificationsv1.PlatformNotificationsV1, error)
 	PowerhaAutomationServiceV1() (*powerhaautomationservicev1.PowerhaAutomationServiceV1, error)
+	BrokerApiV1() (*brokerapiv1.BrokerApiV1, error)
 }
 
 type clientSession struct {
@@ -743,6 +748,10 @@ type clientSession struct {
 	// pha automation
 	powerhaAutomationServiceClient    *powerhaautomationservicev1.PowerhaAutomationServiceV1
 	powerhaAutomationServiceClientErr error
+
+	// BYOC Broker API
+	brokerApiClient    *brokerapiv1.BrokerApiV1
+	brokerApiClientErr error
 }
 
 // Usage Reports
@@ -2706,6 +2715,50 @@ func (c *Config) ClientSession() (interface{}, error) {
 		}
 	}
 
+	// BYOC Broker API Service
+	if session.brokerApiClientErr == nil {
+		brokerApiURL := "https://broker-api-eastus.services.db2-azure-byoc.dev.saas.ibm.com/byoc"
+
+		// BYOC uses separate bearer token authentication (independent from IBM Cloud IAM)
+		// This allows tests to use both IBM Cloud IAM token (for test framework)
+		// and BYOC bearer token (for BYOC API) simultaneously
+		var byocAuthenticator core.Authenticator
+		byocBearerToken := c.BYOCBearerToken
+
+		if byocBearerToken != "" {
+			// Strip "Bearer " prefix if present
+			if strings.HasPrefix(byocBearerToken, "Bearer ") {
+				byocBearerToken = byocBearerToken[7:]
+			}
+			byocAuthenticator = &core.BearerTokenAuthenticator{
+				BearerToken: byocBearerToken,
+			}
+			log.Printf("[DEBUG] BYOC: Bearer token configured (length: %d, preview: %s...)",
+				len(byocBearerToken), byocBearerToken[:min(20, len(byocBearerToken))])
+		} else {
+			// Fall back to standard authenticator
+			byocAuthenticator = authenticator
+			log.Printf("[WARN] BYOC: No bearer token found, using standard authenticator")
+		}
+
+		brokerApiClientOptions := &brokerapiv1.BrokerApiV1Options{
+			Authenticator: byocAuthenticator,
+			URL:           EnvFallBack([]string{"IBMCLOUD_BROKER_API_ENDPOINT"}, brokerApiURL),
+		}
+
+		session.brokerApiClient, err = brokerapiv1.NewBrokerApiV1(brokerApiClientOptions)
+		if err != nil {
+			session.brokerApiClientErr = fmt.Errorf("Error occurred while configuring BYOC Broker API service: %q", err)
+		}
+
+		if session.brokerApiClient != nil && session.brokerApiClient.Service != nil {
+			session.brokerApiClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+			session.brokerApiClient.SetDefaultHeaders(gohttp.Header{
+				"X-Original-User-Agent": {fmt.Sprintf("terraform-provider-ibm/%s", version.Version)},
+			})
+		}
+	}
+
 	// CIS Service instances starts here.
 	cisURL := ContructEndpoint("api.cis", cloudEndpoint)
 	if c.Visibility == "private" {
@@ -4288,4 +4341,9 @@ func isRetryable(err error) bool {
 func ContructEndpoint(subdomain, domain string) string {
 	endpoint := fmt.Sprintf("https://%s.%s", subdomain, domain)
 	return endpoint
+}
+
+// BrokerApiV1 returns a BrokerApiV1 client
+func (sess clientSession) BrokerApiV1() (*brokerapiv1.BrokerApiV1, error) {
+	return sess.brokerApiClient, sess.brokerApiClientErr
 }

@@ -57,6 +57,7 @@ type frameworkProviderModel struct {
 	IAMProfileName         types.String `tfsdk:"iam_profile_name"`
 	IAMToken               types.String `tfsdk:"iam_token"`
 	IAMRefreshToken        types.String `tfsdk:"iam_refresh_token"`
+	BYOCBearerToken 	   types.String `tfsdk:"byoc_bearer_token"`
 	Visibility             types.String `tfsdk:"visibility"`
 	PrivateEndpointType    types.String `tfsdk:"private_endpoint_type"`
 	EndpointsFilePath      types.String `tfsdk:"endpoints_file_path"`
@@ -188,6 +189,11 @@ func (p *frameworkProvider) Schema(ctx context.Context, req provider.SchemaReque
 			"visibility": schema.StringAttribute{
 				Optional:    true,
 				Description: "Visibility of the provider if it is private or public.",
+			},
+			"byoc_bearer_token": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				Description: "BYOC API Bearer token (separate from IAM token)",
 			},
 			"private_endpoint_type": schema.StringAttribute{
 				Optional:    true,
