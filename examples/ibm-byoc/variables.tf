@@ -13,10 +13,9 @@ variable "byoc_engine_dataplane_id" {
   type        = string
   default     = "8ccfce03-cdeb-4b48-a45f-a2995a41e859"
 }
-variable "byoc_engine_availability_zone" {
-  description = ""
-  type        = string
-  default     = "us-south-1"
+variable "byoc_engine_id"{
+  description = "Engine ID"
+  type        = string  
 }
 variable "byoc_engine_storage_units" {
   description = ""
@@ -29,7 +28,7 @@ variable "byoc_engine_compute_units" {
   default     = 2
 }
 variable "byoc_engine_engine_name" {
-  description = ""
+  description = "Base name for the engine (timestamp will be automatically appended for uniqueness)"
   type        = string
   default     = "db2-engine"
 }
@@ -83,24 +82,4 @@ variable "byoc_engine_oracle_compatibility" {
   description = ""
   type        = bool
   default     = false
-}
-variable "byoc_engine_plan" {
-  description = ""
-  type        = string
-  default     = "db2wh-small"
-}
-variable "byoc_engine_profile_name" {
-  description = ""
-  type        = string
-  default     = "netezza-profile"
-}
-variable "byoc_engine_service_principals" {
-  description = ""
-  type        = list(string)
-  default     = ["service-principal-1"]
-}
-variable "byoc_engine_subscription_ids" {
-  description = ""
-  type        = list(string)
-  default     = ["550e8400-e29b-41d4-a716-446655440000"]
 }

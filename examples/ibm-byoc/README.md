@@ -1,4 +1,4 @@
-# Examples for Broker Api
+# Examples for Byoc Broker Api
 
 These examples illustrate how to use the resources and data sources associated with Broker Api.
 
@@ -11,6 +11,7 @@ The following resources are supported:
 
 ```bash
 export BYOC_BEARER_TOKEN="your-bearer-token-here"
+# or
 export IBMCLOUD_BYOC_TOKEN="your-bearer-token-here"
 ```
 

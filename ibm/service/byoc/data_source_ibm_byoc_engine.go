@@ -42,11 +42,6 @@ func DataSourceIbmByocEngine() *schema.Resource {
 				Required:    true,
 				Description: "Engine ID.",
 			},
-			"availability_zone": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Availability zone for the engine.",
-			},
 			"storage_units": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -101,23 +96,6 @@ func DataSourceIbmByocEngine() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Plan for the engine.",
-			},
-			"profile_name": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Profile name for the engine.",
-			},
-			"service_principals": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "Service principals.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"subscription_ids": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "Subscription IDs.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": &schema.Schema{
 				Type:        schema.TypeList,
@@ -235,12 +213,6 @@ func dataSourceIbmByocEngineRead(context context.Context, d *schema.ResourceData
 		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting dataplane_id: %s", err), "(Data) ibm_byoc_engine", "read", "set-dataplane_id").GetDiag()
 	}
 
-	if !core.IsNil(getEngineByIdResponse.AvailabilityZone) {
-		if err = d.Set("availability_zone", getEngineByIdResponse.AvailabilityZone); err != nil {
-			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting availability_zone: %s", err), "(Data) ibm_byoc_engine", "read", "set-availability_zone").GetDiag()
-		}
-	}
-
 	if !core.IsNil(getEngineByIdResponse.StorageUnits) {
 		if err = d.Set("storage_units", flex.IntValue(getEngineByIdResponse.StorageUnits)); err != nil {
 			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting storage_units: %s", err), "(Data) ibm_byoc_engine", "read", "set-storage_units").GetDiag()
@@ -304,24 +276,6 @@ func dataSourceIbmByocEngineRead(context context.Context, d *schema.ResourceData
 	if !core.IsNil(getEngineByIdResponse.Plan) {
 		if err = d.Set("plan", getEngineByIdResponse.Plan); err != nil {
 			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting plan: %s", err), "(Data) ibm_byoc_engine", "read", "set-plan").GetDiag()
-		}
-	}
-
-	if !core.IsNil(getEngineByIdResponse.ProfileName) {
-		if err = d.Set("profile_name", getEngineByIdResponse.ProfileName); err != nil {
-			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting profile_name: %s", err), "(Data) ibm_byoc_engine", "read", "set-profile_name").GetDiag()
-		}
-	}
-
-	if !core.IsNil(getEngineByIdResponse.ServicePrincipals) {
-		if err = d.Set("service_principals", getEngineByIdResponse.ServicePrincipals); err != nil {
-			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting service_principals: %s", err), "(Data) ibm_byoc_engine", "read", "set-service_principals").GetDiag()
-		}
-	}
-
-	if !core.IsNil(getEngineByIdResponse.SubscriptionIds) {
-		if err = d.Set("subscription_ids", getEngineByIdResponse.SubscriptionIds); err != nil {
-			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting subscription_ids: %s", err), "(Data) ibm_byoc_engine", "read", "set-subscription_ids").GetDiag()
 		}
 	}
 

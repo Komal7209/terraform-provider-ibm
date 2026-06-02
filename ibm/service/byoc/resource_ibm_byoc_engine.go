@@ -46,11 +46,6 @@ func ResourceIbmByocEngine() *schema.Resource {
 				ForceNew:    true,
 				Description: "Data Plane ID.",
 			},
-			"availability_zone": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"storage_units": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -126,23 +121,6 @@ func ResourceIbmByocEngine() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-			},
-			"profile_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
-			"service_principals": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"subscription_ids": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"tags": &schema.Schema{
 				Type:     schema.TypeList,
@@ -287,23 +265,11 @@ func resourceIbmByocEngineCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("instance_type"); ok {
 		bodyModelMap["instance_type"] = d.Get("instance_type")
 	}
-	if _, ok := d.GetOk("availability_zone"); ok {
-		bodyModelMap["availability_zone"] = d.Get("availability_zone")
-	}
 	if _, ok := d.GetOk("plan"); ok {
 		bodyModelMap["plan"] = d.Get("plan")
 	}
 	if _, ok := d.GetOk("endpoint_type"); ok {
 		bodyModelMap["endpoint_type"] = d.Get("endpoint_type")
-	}
-	if _, ok := d.GetOk("profile_name"); ok {
-		bodyModelMap["profile_name"] = d.Get("profile_name")
-	}
-	if _, ok := d.GetOk("service_principals"); ok {
-		bodyModelMap["service_principals"] = d.Get("service_principals")
-	}
-	if _, ok := d.GetOk("subscription_ids"); ok {
-		bodyModelMap["subscription_ids"] = d.Get("subscription_ids")
 	}
 	subscriptionID := strfmt.UUID(d.Get("subscription_id").(string))
 	dataplaneID := strfmt.UUID(d.Get("dataplane_id").(string))
@@ -388,12 +354,12 @@ func resourceIbmByocEngineRead(context context.Context, d *schema.ResourceData, 
 		err = fmt.Errorf("Error setting dataplane_id: %s", err)
 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-dataplane_id").GetDiag()
 	}
-	if !core.IsNil(getEngineByIdResponse.AvailabilityZone) {
-		if err = d.Set("availability_zone", getEngineByIdResponse.AvailabilityZone); err != nil {
-			err = fmt.Errorf("Error setting availability_zone: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-availability_zone").GetDiag()
-		}
-	}
+	// if !core.IsNil(getEngineByIdResponse.AvailabilityZone) {
+	// 	if err = d.Set("availability_zone", getEngineByIdResponse.AvailabilityZone); err != nil {
+	// 		err = fmt.Errorf("Error setting availability_zone: %s", err)
+	// 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-availability_zone").GetDiag()
+	// 	}
+	// }
 	if !core.IsNil(getEngineByIdResponse.StorageUnits) {
 		if err = d.Set("storage_units", flex.IntValue(getEngineByIdResponse.StorageUnits)); err != nil {
 			err = fmt.Errorf("Error setting storage_units: %s", err)
@@ -460,24 +426,24 @@ func resourceIbmByocEngineRead(context context.Context, d *schema.ResourceData, 
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-plan").GetDiag()
 		}
 	}
-	if !core.IsNil(getEngineByIdResponse.ProfileName) {
-		if err = d.Set("profile_name", getEngineByIdResponse.ProfileName); err != nil {
-			err = fmt.Errorf("Error setting profile_name: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-profile_name").GetDiag()
-		}
-	}
-	if !core.IsNil(getEngineByIdResponse.ServicePrincipals) {
-		if err = d.Set("service_principals", getEngineByIdResponse.ServicePrincipals); err != nil {
-			err = fmt.Errorf("Error setting service_principals: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-service_principals").GetDiag()
-		}
-	}
-	if !core.IsNil(getEngineByIdResponse.SubscriptionIds) {
-		if err = d.Set("subscription_ids", getEngineByIdResponse.SubscriptionIds); err != nil {
-			err = fmt.Errorf("Error setting subscription_ids: %s", err)
-			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-subscription_ids").GetDiag()
-		}
-	}
+	// if !core.IsNil(getEngineByIdResponse.ProfileName) {
+	// 	if err = d.Set("profile_name", getEngineByIdResponse.ProfileName); err != nil {
+	// 		err = fmt.Errorf("Error setting profile_name: %s", err)
+	// 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-profile_name").GetDiag()
+	// 	}
+	// }
+	// if !core.IsNil(getEngineByIdResponse.ServicePrincipals) {
+	// 	if err = d.Set("service_principals", getEngineByIdResponse.ServicePrincipals); err != nil {
+	// 		err = fmt.Errorf("Error setting service_principals: %s", err)
+	// 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-service_principals").GetDiag()
+	// 	}
+	// }
+	// if !core.IsNil(getEngineByIdResponse.SubscriptionIds) {
+	// 	if err = d.Set("subscription_ids", getEngineByIdResponse.SubscriptionIds); err != nil {
+	// 		err = fmt.Errorf("Error setting subscription_ids: %s", err)
+	// 		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_byoc_engine", "read", "set-subscription_ids").GetDiag()
+	// 	}
+	// }
 	if !core.IsNil(getEngineByIdResponse.Tags) {
 		if err = d.Set("tags", getEngineByIdResponse.Tags); err != nil {
 			err = fmt.Errorf("Error setting tags: %s", err)
