@@ -63,10 +63,10 @@ variable "byoc_engine_instance_type" {
   type        = string
   default     = "Standard_D4s_v5"
 }
-variable "byoc_engine_replicas" {
-  description = ""
-  type        = number
-  default     = 1
+variable "byoc_engine_high_availability" {
+  description = "Enable high availability mode (true = 2 replicas, false = 1 replica)"
+  type        = bool
+  default     = false
 }
 variable "byoc_engine_public_enabled" {
   description = ""
