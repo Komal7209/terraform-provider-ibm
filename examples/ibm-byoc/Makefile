@@ -43,7 +43,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(COLOR_BOLD)$(COLOR_GREEN)🚀 Terraform Commands:$(COLOR_RESET)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; /init|plan|apply|destroy|validate|fmt|output/ {printf "  $(COLOR_YELLOW)%-20s$(COLOR_RESET) %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; /init-locally|plan|apply|destroy|validate|fmt|output/ {printf "  $(COLOR_YELLOW)%-20s$(COLOR_RESET) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(COLOR_BOLD)$(COLOR_GREEN)🧪 Test Commands:$(COLOR_RESET)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -98,11 +98,11 @@ clean: ## Remove Terraform state and cache files
 # Terraform Commands
 # ============================================================================
 
-.PHONY: init
-init: ## Initialize Terraform (download providers and modules)
+.PHONY: init-locally 
+init-locally: ## Initialize Terraform (download providers and modules)
 	@echo "$(COLOR_BOLD)$(COLOR_BLUE)🚀 Initializing Terraform...$(COLOR_RESET)"
 	@echo "$(COLOR_BLUE)→ Running in current directory: examples/ibm-byoc$(COLOR_RESET)"
-	@$(TERRAFORM) init
+	@$(TERRAFORM) init -upgrade -plugin-dir=$(HOME)/.terraform.d/plugins
 	@echo "$(COLOR_GREEN)✓ Terraform initialized$(COLOR_RESET)"
 
 .PHONY: validate
@@ -112,12 +112,12 @@ validate: ## Validate Terraform configuration files
 	@$(TERRAFORM) validate
 	@echo "$(COLOR_GREEN)✓ Configuration is valid$(COLOR_RESET)"
 
-.PHONY: fmt
-fmt: ## Format Terraform configuration files
-	@echo "$(COLOR_BOLD)$(COLOR_BLUE)📝 Formatting Terraform files...$(COLOR_RESET)"
-	@echo "$(COLOR_BLUE)→ Running in current directory: examples/ibm-byoc$(COLOR_RESET)"
-	@$(TERRAFORM) fmt -recursive
-	@echo "$(COLOR_GREEN)✓ Files formatted$(COLOR_RESET)"
+# .PHONY: fmt
+# fmt: ## Format Terraform configuration files
+# 	@echo "$(COLOR_BOLD)$(COLOR_BLUE)📝 Formatting Terraform files...$(COLOR_RESET)"
+# 	@echo "$(COLOR_BLUE)→ Running in current directory: examples/ibm-byoc$(COLOR_RESET)"
+# 	@$(TERRAFORM) fmt -recursive
+# 	@echo "$(COLOR_GREEN)✓ Files formatted$(COLOR_RESET)"
 
 .PHONY: plan
 plan: ## Show Terraform execution plan (preview changes)
