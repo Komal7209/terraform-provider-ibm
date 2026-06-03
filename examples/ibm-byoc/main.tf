@@ -6,29 +6,33 @@ locals {
   # Generate a unique engine name by appending timestamp
   # Format: db2-engine-20260602-143622
   engine_name_with_timestamp = "${var.byoc_engine_engine_name}-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  
+  # Calculate replicas based on high_availability setting
+  # High availability = 2 replicas, Standard = 1 replica
+  replicas = var.byoc_engine_high_availability ? 2 : 1 # this will be applicable until the API supports high availability only with 2 replicas
 }
 
 // ============================================================================
 // BYOC Engine Resource - Create a new BYOC DB2 Engine
 // ============================================================================
 
-# resource "ibm_byoc_engine" "byoc_engine_instance" {
-#   subscription_id               = var.byoc_engine_subscription_id
-#   dataplane_id                  = var.byoc_engine_dataplane_id
-#   storage_units                 = var.byoc_engine_storage_units
-#   compute_units                 = var.byoc_engine_compute_units
-#   engine_name                   = local.engine_name_with_timestamp
-#   engine_type                   = var.byoc_engine_engine_type
-#   admin_username                = var.byoc_engine_admin_username
-#   admin_password                = var.byoc_engine_admin_password
-#   admin_email                   = var.byoc_engine_admin_email
-#   endpoint_type                 = var.byoc_engine_endpoint_type
-#   instance_type                 = var.byoc_engine_instance_type
-#   replicas                      = var.byoc_engine_replicas
-#   public_enabled                = var.byoc_engine_public_enabled
-#   private_link_service_enabled  = var.byoc_engine_private_link_service_enabled
-#   oracle_compatibility          = var.byoc_engine_oracle_compatibility
-# }
+resource "ibm_byoc_engine" "byoc_engine_instance" {
+  subscription_id               = var.byoc_engine_subscription_id
+  dataplane_id                  = var.byoc_engine_dataplane_id
+  storage_units                 = var.byoc_engine_storage_units
+  compute_units                 = var.byoc_engine_compute_units
+  engine_name                   = local.engine_name_with_timestamp
+  engine_type                   = var.byoc_engine_engine_type
+  admin_username                = var.byoc_engine_admin_username
+  admin_password                = var.byoc_engine_admin_password
+  admin_email                   = var.byoc_engine_admin_email
+  endpoint_type                 = var.byoc_engine_endpoint_type
+  instance_type                 = var.byoc_engine_instance_type
+  replicas                      = local.replicas
+  public_enabled                = var.byoc_engine_public_enabled
+  private_link_service_enabled  = var.byoc_engine_private_link_service_enabled
+  oracle_compatibility          = var.byoc_engine_oracle_compatibility
+}
 
 // ============================================================================
 // Data Source - Get details of a specific BYOC Engine by ID
@@ -37,6 +41,7 @@ locals {
 # Note: The engine_id needs to be extracted from the composite resource ID
 # Resource ID format: subscription_id/dataplane_id/engine_id
 # For now, commenting out until engine is created and ID is known
+# when user wants same engine detail which was generated recently
 
 data "ibm_byoc_engine" "byoc_engine_data" {
   subscription_id = var.byoc_engine_subscription_id
@@ -49,10 +54,10 @@ data "ibm_byoc_engine" "byoc_engine_data" {
 // Data Source - List all BYOC Engines in a Dataplane
 // ============================================================================
 
-# data "ibm_byoc_engines" "byoc_engines_list" {
-#   subscription_id = var.byoc_engine_subscription_id
-#   dataplane_id    = var.byoc_engine_dataplane_id
-# }
+data "ibm_byoc_engines" "byoc_engines_list" {
+  subscription_id = var.byoc_engine_subscription_id
+  dataplane_id    = var.byoc_engine_dataplane_id
+}
 
 // ============================================================================
 // Example: Using DB2 User Management with BYOC Engine
